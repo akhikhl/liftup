@@ -8,9 +8,6 @@ buildscript {
   apply plugin: "maven"
   
   dependencies {
-    classpath "org.akhikhl.ghino:ghino-plugin:0.0.1"
-    classpath "org.akhikhl.sweet:sweet-deps:0.0.1"
-    classpath "org.akhikhl.sweet:sweet-lib:0.0.1"
     classpath "org.akhikhl.sweet:sweet-app:0.0.1"
   }
 }
