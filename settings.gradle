@@ -1,7 +1,0 @@
-include "contribs"
-include "osgi2maven"
-include "swtdeps"
-include "swt"
-include "swtapp"
-
-
