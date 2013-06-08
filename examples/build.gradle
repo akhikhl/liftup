@@ -13,16 +13,17 @@ buildscript {
 }
 
 allprojects {
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
   group = "org.akhikhl.sweet.examples"
   version = "0.0.1"
 }
 
-apply plugin: "maven"
-apply plugin: "sweetdeps"
+subprojects {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  apply plugin: "maven"
+}
 
 defaultTasks "build"
 
