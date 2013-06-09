@@ -1,6 +1,5 @@
 package sweetplugin
 
-import org.apache.commons.codec.digest.DigestUtils
 import org.gradle.api.*
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
@@ -16,9 +15,11 @@ class SweetAppPlugin implements Plugin<Project> {
     project.extensions.create("sweetapp", SweetAppPluginExtension)
 
     // we import eclipse settings here, so that user may override particular settings in project config
-    applyEclipseConfig project
+    new EclipseConfig().applyToProject project
 
-    project.onejar.afterEvaluate {
+    // we use onejar hook, because we need to populate onejar config
+    // before onejar starts to generate products.
+    project.onejar.beforeProductGeneration {
 
       project.dependencies {
         compile "${project.eclipseGroup}:org.eclipse.swt:${project.swt_version}"
@@ -45,28 +46,5 @@ class SweetAppPlugin implements Plugin<Project> {
           project.onejar.product name: configName, launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch
       }
     }
-  }
-
-  void applyEclipseConfig(final Project project) {
-    applyResourceFile project, "platformConfig.gradle"
-    applyResourceFile project, "eclipseConfig.gradle"
-  }
-
-  void applyResourceFile(final Project project, String fileName) {
-    def eclipseConfigFilePath = "${project.buildDir}/$fileName"
-    def eclipseConfigFile = new File(eclipseConfigFilePath)
-    def oldDigest
-    if(eclipseConfigFile.exists())
-      eclipseConfigFile.withInputStream { ins ->
-        oldDigest = DigestUtils.md5Hex(ins)
-      }
-    def newDigest = DigestUtils.md5Hex(this.class.getResourceAsStream(fileName))
-    if(newDigest != oldDigest) {
-      eclipseConfigFile.parentFile.mkdirs()
-      eclipseConfigFile.withOutputStream { ostream ->
-        ostream << this.class.getResourceAsStream(fileName)
-      }
-    }
-    project.apply from: eclipseConfigFilePath
   }
 }
