@@ -27,9 +27,11 @@ class SweetAppPlugin implements Plugin<Project> {
         compile "${project.eclipseGroup}:org.eclipse.swt.${project.current_os_suffix}.${project.current_arch_suffix}:${project.swt_version}"
       }
 
-      project.sweetapp.products.each { product ->
-        def platform = product.platform ?: "linux"
-        def arch = product.arch ?: (platform == "windows" ? "x86_32" : "x86_64")
+      def products = project.sweetapp.products ?: [[]]
+
+      products.each { product ->
+        def platform = product.platform ?: project.current_os
+        def arch = product.arch ?: project.current_arch
         def language = product.language ?: ""
         def configName = "swt_${platform}_${arch}"
         if(language)

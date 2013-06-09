@@ -1,1 +1,3 @@
 include "helloSweet"
+include "testlib"
+include "testapp"

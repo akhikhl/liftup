@@ -1,0 +1,14 @@
+apply plugin: "java"
+apply plugin: "sweetapp"
+
+dependencies {
+  compile project(":testlib")
+}
+
+jar {
+  manifest { attributes "Main-Class": "testapp.Main" }
+}
+
+onejar {
+  archiveProducts true
+}
