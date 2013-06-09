@@ -1,6 +1,7 @@
-ext.sweetapp = [
-  mainClass: "hellosweet.Main"
-]
-
+apply plugin: "java"
 apply plugin: "sweetapp"
+
+jar {
+  manifest { attributes "Main-Class": "hellosweet.Main" }
+}
 
