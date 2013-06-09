@@ -8,7 +8,7 @@ buildscript {
   apply plugin: "maven"
   
   dependencies {
-    classpath "org.akhikhl.sweet:sweet-app:0.0.1"
+    classpath "org.akhikhl.sweet:sweet-plugin:0.0.1"
   }
 }
 

@@ -14,28 +14,6 @@ Use platform-specific shell or batch script in folder $buildDir/output
 
 Use menu command "Run As/Java Application", choose hellosweet.Main class as main-class.
 
-##Locatization
-
-The application is localized (translated into other languages) with the following
-steps:
-
-1. define sweetapp.language in "build.gradle":
-
-```groovy
-sweetapp {
-  language "de"
-}
-```
-
-The application may define multiple languages. In this case the generated
-product will contain localization files corresponding to all defined languages.
-
-2. switch the language at runtime:
-
-```java
-Locale.setDefault(Locale.GERMAN);
-```
-
 ##Known issues
 
 * NullPointerException on project compilation or update 

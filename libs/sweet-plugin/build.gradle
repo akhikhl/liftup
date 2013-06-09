@@ -1,0 +1,17 @@
+apply plugin: "groovy"
+
+dependencies {
+  compile "org.codehaus.groovy:groovy-all:1.8.6"
+  compile gradleApi()
+  compile "commons-codec:commons-codec:1.8"
+  compile "org.akhikhl.gradle-onejar:gradle-onejar:0.0.1"
+}
+
+task("copyConfigFiles", type:Copy) {
+  def configFiles = files("../platformConfig.gradle", "../eclipseConfig.gradle")
+  inputs.files configFiles
+  from configFiles
+  into "$buildDir/resources/main/sweetplugin"
+}
+
+processResources.dependsOn "copyConfigFiles"
