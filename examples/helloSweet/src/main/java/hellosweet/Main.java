@@ -1,5 +1,7 @@
 package hellosweet;
 
+import java.util.Locale;
+
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -13,7 +15,7 @@ import org.eclipse.swt.widgets.Shell;
 public final class Main {
 
   public static void main(String[] args) {
-
+    Locale.setDefault(Locale.GERMAN);
     Display display = new Display();
     try {
       final Shell shell = new Shell(display);

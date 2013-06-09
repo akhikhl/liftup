@@ -5,3 +5,10 @@ jar {
   manifest { attributes "Main-Class": "hellosweet.Main" }
 }
 
+onejar {
+  archiveProducts true
+}
+
+sweetapp {
+  language "de"
+}
