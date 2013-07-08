@@ -16,22 +16,9 @@ class RcpAppPlugin implements Plugin<Project> {
 
     EclipseConfig.addRcpDependencies project
 
-    project.equinox.beforeProductGeneration {
+    EclipseConfig.createRcpConfigurations project
 
-      PlatformConfig.supported_oses.each { platform ->
-        PlatformConfig.supported_archs.each { arch ->
-          String configName = "product_rcp_${platform}_${arch}"
-          def config = project.configurations.create(configName)
-          config.extendsFrom project.configurations.findByName("product_equinox_${platform}_${arch}")
-          EclipseConfig.addRcpDependencies project, configName, platform, arch
-          PlatformConfig.supported_languages.each { language ->
-            String localizedConfigName = "product_rcp_${platform}_${arch}_${language}"
-            def localizedConfig = project.configurations.create(localizedConfigName)
-            localizedConfig.extendsFrom config
-            EclipseConfig.addRcpDependencies project, localizedConfigName, platform, arch, language
-          }
-        }
-      }
+    project.equinox.beforeProductGeneration {
 
       project.rcp.products.each { product ->
         String platform = product.platform ?: PlatformConfig.current_os

@@ -13,6 +13,34 @@ class EquinoxAppPlugin implements Plugin<Project> {
   private static final String osgiFrameworkPluginName = 'org.eclipse.osgi'
   private static final String equinoxLauncherPluginName = 'org.eclipse.equinox.launcher'
 
+  private static String getEclipseApplicationId(Project project) {
+    String result
+    project.sourceSets.main.resources.srcDirs.each { File srcDir ->
+      File pluginConfigFile = new File(srcDir, 'plugin.xml')
+      if(pluginConfigFile.exists()) {
+        def pluginConfig = new XmlParser().parse(pluginConfigFile)
+        result = pluginConfig.extension.find({ it.'@point' == 'org.eclipse.core.runtime.applications' })?.'@id'
+      }
+    }
+    if(result)
+      result = "${project.name}.$result"
+    return result
+  }
+
+  private static String getEclipseProductId(Project project) {
+    String result
+    project.sourceSets.main.resources.srcDirs.each { File srcDir ->
+      File pluginConfigFile = new File(srcDir, 'plugin.xml')
+      if(pluginConfigFile.exists()) {
+        def pluginConfig = new XmlParser().parse(pluginConfigFile)
+        result = pluginConfig.extension.find({ it.'@point' == 'org.eclipse.core.runtime.products' })?.'@id'
+      }
+    }
+    if(result)
+      result = "${project.name}.$result"
+    return result
+  }
+
   private static String getPluginName(String fileName) {
     return fileName.replaceAll(eclipsePluginMask, '$1')
   }
@@ -26,37 +54,13 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
     EclipseConfig.addEquinoxDependencies project
 
+    EclipseConfig.createEquinoxConfigurations project
+
     project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
-
-    String applicationId
-    String productId
-
-    project.sourceSets.main.resources.srcDirs.each { File srcDir ->
-      File pluginConfigFile = new File(srcDir, 'plugin.xml')
-      if(pluginConfigFile.exists()) {
-        def pluginConfig = new XmlParser().parse(pluginConfigFile)
-        applicationId = pluginConfig.extension.find({ it.'@point' == 'org.eclipse.core.runtime.applications' })?.'@id'
-        productId = pluginConfig.extension.find({ it.'@point' == 'org.eclipse.core.runtime.products' })?.'@id'
-      }
-    }
-
-    if(applicationId)
-      applicationId = "${project.name}.$applicationId"
-
-    if(productId)
-      productId = "${project.name}.$productId"
 
     project.afterEvaluate {
 
       ManifestUtils.extendManifest project
-
-      PlatformConfig.supported_oses.each { platform ->
-        PlatformConfig.supported_archs.each { arch ->
-          String configName = "product_equinox_${platform}_${arch}"
-          project.configurations.create configName
-          EclipseConfig.addEquinoxDependencies project, configName, platform, arch
-        }
-      }
 
       project.equinox.beforeProductGeneration.each { obj ->
         if(obj instanceof Closure)
@@ -213,8 +217,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
           runConfigFile.parentFile.mkdirs()
           runConfigFile.withPrintWriter { PrintWriter configWriter ->
+            String applicationId = getEclipseApplicationId(project)
             if(applicationId)
               configWriter.println "eclipse.application=$applicationId"
+            String productId = getEclipseProductId(project)
             if(productId)
               configWriter.println "eclipse.product=$productId"
             project.sourceSets.main.resources.srcDirs.each { File srcDir ->
@@ -361,8 +367,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
             File configFile = new File("$productOutputDir/configuration/config.ini")
             configFile.parentFile.mkdirs()
             configFile.withPrintWriter { PrintWriter configWriter ->
+              String applicationId = getEclipseApplicationId(project)
               if(applicationId)
                 configWriter.println "eclipse.application=$applicationId"
+              String productId = getEclipseProductId(project)
               if(productId)
                 configWriter.println "eclipse.product=$productId"
               configWriter.println "osgi.framework=file\\:plugins/${frameworkFile.name}"

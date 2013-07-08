@@ -1,6 +1,6 @@
 package sweetplugin
 
-class RcpAppPluginExtension {
+class EclipseIdeAppPluginExtension {
 
   private boolean defaultProducts = true
   def products = [[ name: 'default' ]]
