@@ -34,21 +34,25 @@ class ManifestUtils {
             activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
             activator = activator.replaceAll('/', '.')
             m.instructionReplace 'Bundle-Activator', activator
-            m.instructionReplace 'Bundle-ActivationPolicy', 'lazy'
+            //m.instructionReplace 'Bundle-ActivationPolicy', 'lazy'
           }
         }
 
         boolean pluginConfigMet = false
         project.sourceSets.main.resources.srcDirs.each { File srcDir ->
-          File locatizationDir = new File(srcDir, 'OSGI-INF/l10n')
-          if(locatizationDir.exists()) {
-            def localizationFiles = new FileNameFinder().getFileNames(locatizationDir.absolutePath, 'bundle*.properties')
-            if(localizationFiles)
-              m.instructionReplace 'Bundle-Localization', 'OSGI-INF/l10n/bundle'
-          }
-          if(new File(srcDir, 'plugin.xml').exists()) {
-            m.setSymbolicName "${project.name}; singleton:=true"
-            pluginConfigMet = true
+          if(srcDir.exists()) {
+            File locatizationDir = new File(srcDir, 'OSGI-INF/l10n')
+            // if locatizationDir exists, it will be used by OSGi automatically
+            // and there's no need for Bundle-Localization
+            if(!locatizationDir.exists()) {
+              def localizationFiles = new FileNameFinder().getFileNames(srcDir.absolutePath, 'plugin*.properties')
+              if(localizationFiles)
+                m.instructionReplace 'Bundle-Localization', 'plugin'
+            }
+            if(new File(srcDir, 'plugin.xml').exists()) {
+              m.setSymbolicName "${project.name}; singleton:=true"
+              pluginConfigMet = true
+            }
           }
         }
 
