@@ -1,0 +1,8 @@
+apply plugin: 'java'
+apply plugin: 'eclipse-equinox-app'
+
+version = "0.0.1"
+
+dependencies {
+  compile project(':helloEquinox:Plugin2')
+}

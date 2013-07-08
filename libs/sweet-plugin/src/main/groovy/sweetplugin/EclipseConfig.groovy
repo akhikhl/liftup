@@ -7,7 +7,7 @@ class EclipseConfig {
   // eclipseGroup must be the same as in "eclipseDownloadConfig.gradle"
   public static final String eclipseGroup = 'eclipse-juno'
 
-  public static void addEclipsePluginDependencies(Project project) {
+  public static void addEclipseBundleDependencies(Project project) {
     project.dependencies {
       compile "${eclipseGroup}:javax.annotation:1.0.0.v20101115-0725"
       compile "${eclipseGroup}:javax.inject:1.0.0.v20091030"
