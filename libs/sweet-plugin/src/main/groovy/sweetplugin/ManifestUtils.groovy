@@ -15,6 +15,10 @@ class ManifestUtils {
       inputs.files project.configurations.runtime
       outputs.files manifestFile
       doLast {
+        // fix for problem with non-existing classesDir, when the project contains no java/groovy sources
+        // (resources-only project)
+        project.sourceSets.main.output.classesDir.mkdirs()
+
         def m = project.osgiManifest {
           setName project.name
           setVersion project.version
