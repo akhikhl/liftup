@@ -25,17 +25,11 @@ Use menu command "Run As/Java Application", choose hellosweet.Main class as main
 
   **Solution**
 
-  1. Find GradleDaemon process on the given machine. On linux:
+  1. Find and kill GradleDaemon process on the given machine. On linux:
   
   ```shell
-  ps aux | grep GradleDaemon | grep -v grep
-  ```  
-
-  2. Kill the process. On linux:
-  
+  sudo pkill -9 -f GradleDaemon
   ```
-  sudo kill -9 process_num
-  ```
-  
-  3. It's not needed to restart eclipse - killing GradleDaemon fixes the problem
+    
+  2. There's no need to restart eclipse - killing GradleDaemon fixes the problem
      immediately.

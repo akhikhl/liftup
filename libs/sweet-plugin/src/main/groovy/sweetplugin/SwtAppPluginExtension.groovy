@@ -1,6 +1,6 @@
 package sweetplugin
 
-class SweetAppPluginExtension {
+class SwtAppPluginExtension {
 
   def products = []
 

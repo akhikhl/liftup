@@ -1,16 +1,16 @@
-apply plugin: "java"
-apply plugin: "sweetapp"
+apply plugin: 'java'
+apply plugin: 'swt-app'
 
 jar {
-  manifest { attributes "Main-Class": "hellosweet.Main" }
+  manifest { attributes 'Main-Class': 'hellosweet.Main' }
 }
 
 onejar {
   archiveProducts true
 }
 
-sweetapp {
-  product platform: "windows", arch: "x86_32", language: "de"
-  product platform: "linux", arch: "x86_64"
-  product platform: "linux", arch: "x86_64", language: "de"
+swtapp {
+  product platform: 'windows', arch: 'x86_32', language: 'de'
+  product platform: 'linux', arch: 'x86_64'
+  product platform: 'linux', arch: 'x86_64', language: 'de'
 }

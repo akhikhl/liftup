@@ -5,16 +5,16 @@ buildscript {
     mavenCentral()
   }
 
-  apply plugin: "maven"
+  apply plugin: 'maven'
   
   dependencies {
-    classpath "org.akhikhl.sweet:sweet-plugin:0.0.1"
+    classpath 'org.akhikhl.sweet:sweet-plugin:0.0.2'
   }
 }
 
 allprojects {
-  group = "org.akhikhl.sweet.examples"
-  version = "0.0.1"
+  group = 'org.akhikhl.sweet.examples'
+  version = '0.0.2'
 }
 
 subprojects {
@@ -22,8 +22,8 @@ subprojects {
     mavenLocal()
     mavenCentral()
   }
-  apply plugin: "maven"
+  apply plugin: 'maven'
 }
 
-defaultTasks "build"
+defaultTasks 'build'
 

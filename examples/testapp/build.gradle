@@ -1,12 +1,12 @@
-apply plugin: "java"
-apply plugin: "sweetapp"
+apply plugin: 'java'
+apply plugin: 'swt-app'
 
 dependencies {
-  compile project(":testlib")
+  compile project(':testlib')
 }
 
 jar {
-  manifest { attributes "Main-Class": "testapp.Main" }
+  manifest { attributes 'Main-Class': 'testapp.Main' }
 }
 
 onejar {
