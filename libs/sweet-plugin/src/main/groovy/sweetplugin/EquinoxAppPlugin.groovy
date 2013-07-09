@@ -118,16 +118,24 @@ class EquinoxAppPlugin implements Plugin<Project> {
               setClassesDir lib
               setClasspath project.files(lib)
               instruction 'Bundle-Classpath', lib.name
+              instruction 'Wrapped-Library', lib.name
             }
             m = m.effectiveManifest
             def packages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
             // workarounds for dynamically referenced classes
             if(bundleName.startsWith('ant-optional'))
               packages.remove 'COM.ibm.netrexx.process'
-            else if(bundleName.startsWith('commons-logging')) {
-              packages.remove 'org.apache.log4j'
-              packages.remove 'org.apache.log'
-              packages.remove 'org.apache.avalon.framework.logger'
+            else if(bundleName.startsWith('commons-logging'))
+              packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.logger') }
+            else if(bundleName.startsWith('avalon-framework'))
+              packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.parameters') }
+            else if(bundleName == 'batik-js')
+              packages.remove 'org.apache.xmlbeans'
+            else if(bundleName == 'batik-script')
+              packages.remove 'org.mozilla.javascript'
+            else if(bundleName == 'fop') {
+              packages.remove 'javax.media.jai'
+              packages = packages.findAll { !it.key.startsWith('org.apache.tools.ant') }
             }
             else if(bundleName.startsWith('jdom')) {
               packages.remove 'oracle.xml.parser'
@@ -148,9 +156,16 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'oracle.ons'
               packages.remove 'oracle.security.pki'
             }
+            else if(bundleName == 'xalan')
+              packages.remove 'sun.io'
+            else if(bundleName == 'xmlgraphics-commons')
+              packages = packages.findAll { !it.key.startsWith('com.sun.image.codec') }
             m.attributes.remove 'Import-Package'
             if(packages)
               m.attributes(['Import-Package': ManifestUtils.packagesToString(packages)])
+
+            m.attributes.remove 'Class-Path'
+
             manifestFile.withWriter { m.writeTo it }
 
             ant.jar(destFile: "${wrappedLibsDir}/${bundlePackageName}.jar", manifest: manifestFile) { fileset(file: lib) }
@@ -332,11 +347,18 @@ class EquinoxAppPlugin implements Plugin<Project> {
                 return
               String launchOption = ''
               if(pluginName == 'org.eclipse.core.runtime')
-                launchOption = '@start'
+                launchOption = '@3:start'
               else if(pluginName == 'org.eclipse.equinox.common')
                 launchOption = '@2:start'
               else if(pluginName == 'org.eclipse.equinox.ds')
                 launchOption = '@1:start'
+              /* else {
+               def manifest = ManifestUtils.getManifest(project, file)
+               if (ManifestUtils.isWrapperBundle(manifest))
+               launchOption = '@4:start'
+               else if (!ManifestUtils.isFragmentBundle(manifest))
+               launchOption = '@start'
+               } */
               if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
                 bundleLaunchList[pluginName] = "reference\\:file\\:${file.name}${launchOption}"
               project.copy {

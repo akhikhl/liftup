@@ -128,7 +128,7 @@ class ManifestUtils {
     File manifestFile = new File("$tmpFolder/$manifestFileName")
     File savedChecksumFile = new File(tmpFolder, 'sourceChecksum')
     String savedChecksum = savedChecksumFile.exists() ? savedChecksumFile.text : ''
-    if(savedChecksum != checksum) {
+    if(savedChecksum != checksum && !manifestFile.exists()) {
       FileTree tree
       if(file.isFile() && (file.name.endsWith('.zip') || file.name.endsWith('.jar')))
         tree = project.zipTree(file)
@@ -154,20 +154,33 @@ class ManifestUtils {
   }
 
   public static String getManifestEntry(java.util.jar.Manifest manifest, String entryName) {
-    for (def key in manifest.getMainAttributes().keySet()) {
-      String attrName = key.toString()
-      if(attrName == entryName)
-        return manifest.getMainAttributes().getValue(attrName)
-    }
+    if(manifest != null)
+      for (def key in manifest.getMainAttributes().keySet()) {
+        String attrName = key.toString()
+        if(attrName == entryName)
+          return manifest.getMainAttributes().getValue(attrName)
+      }
     return null
   }
 
   public static boolean isBundle(java.util.jar.Manifest m) {
-    return m != null && (getManifestEntry(m, 'Bundle-SymbolicName') != null || getManifestEntry(m, 'Bundle-Name') != null)
+    return getManifestEntry(m, 'Bundle-SymbolicName') != null || getManifestEntry(m, 'Bundle-Name') != null
   }
 
   public static boolean isBundle(Project project, File file) {
     return isBundle(getManifest(project, file))
+  }
+
+  public static boolean isFragmentBundle(Project project, File file) {
+    return isFragmentBundle(getManifest(project, file))
+  }
+
+  public static boolean isFragmentBundle(java.util.jar.Manifest m) {
+    return getManifestEntry(m, 'Fragment-Host') != null
+  }
+
+  public static boolean isWrapperBundle(java.util.jar.Manifest m) {
+    return getManifestEntry(m, 'Wrapped-Library') != null
   }
 
   public static String packagesToString(Map packages) {
