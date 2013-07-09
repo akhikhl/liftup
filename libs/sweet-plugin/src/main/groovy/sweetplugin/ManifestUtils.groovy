@@ -1,8 +1,9 @@
 package sweetplugin
 
 import org.apache.commons.codec.digest.DigestUtils
-import org.gradle.api.Project
+import org.gradle.api.*
 import org.gradle.api.file.FileTree
+import org.gradle.api.plugins.*
 
 class ManifestUtils {
 
@@ -34,11 +35,11 @@ class ManifestUtils {
             activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
             activator = activator.replaceAll('/', '.')
             m.instructionReplace 'Bundle-Activator', activator
-            //m.instructionReplace 'Bundle-ActivationPolicy', 'lazy'
+            m.instructionReplace 'Bundle-ActivationPolicy', 'lazy'
           }
         }
 
-        boolean pluginConfigMet = false
+        File pluginConfigFile = null
         project.sourceSets.main.resources.srcDirs.each { File srcDir ->
           if(srcDir.exists()) {
             File locatizationDir = new File(srcDir, 'OSGI-INF/l10n')
@@ -49,14 +50,30 @@ class ManifestUtils {
               if(localizationFiles)
                 m.instructionReplace 'Bundle-Localization', 'plugin'
             }
-            if(new File(srcDir, 'plugin.xml').exists()) {
-              m.setSymbolicName "${project.name}; singleton:=true"
-              pluginConfigMet = true
-            }
+            if(new File(srcDir, 'plugin.xml').exists())
+              pluginConfigFile = new File(srcDir, 'plugin.xml')
           }
         }
 
-        if(!pluginConfigMet)
+        if(pluginConfigFile) {
+          m.setSymbolicName "${project.name}; singleton:=true"
+          project.logger.info 'Analyzing class usage in {}/plugin.xml', project.name
+          def pluginConfig = new XmlParser().parse(pluginConfigFile)
+          def classes = pluginConfig.extension.'**'.findAll({ it.'@class' })*.'@class' + pluginConfig.extension.'**'.findAll({ it.'@contributorClass' })*.'@contributorClass'
+          def packages = classes.collect { it.substring(0, it.lastIndexOf('.')) }.unique(false)
+          def packagesToImport = []
+          packages.each { String packageName ->
+            String packagePath = packageName.replaceAll(/\./, '/')
+            if(project.sourceSets.main.resources.srcDirs.find { new File(it, packagePath).exists() })
+              project.logger.info 'Found package {} within {}, no import needed', packageName, project.name
+            else {
+              project.logger.info 'Did not find package {} within {}, will be imported', packageName, project.name
+              packagesToImport.add packageName
+            }
+          }
+          packagesToImport.each { m.instruction 'Import-Package', it }
+        }
+        else
           m.setSymbolicName project.name
 
         m.instruction 'Require-Bundle', 'org.eclipse.core.runtime'
