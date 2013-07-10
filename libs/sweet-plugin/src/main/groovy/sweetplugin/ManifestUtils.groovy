@@ -85,6 +85,7 @@ class ManifestUtils {
 
     project.jar {
       dependsOn project.tasks.extendManifest
+      inputs.files project.files(manifestFile)
       manifest {
         from(manifestFile.absolutePath) {
           eachEntry { details ->
@@ -104,7 +105,10 @@ class ManifestUtils {
                * 'org.eclipse.core.runtime': if the latter is imported via 'Import-Package',
                * the application throws ClassNotFoundException.
                */
-              newValue.remove 'org.eclipse.core.runtime'
+              def iterator = newValue.entrySet().iterator()
+              while (iterator.hasNext())
+                if (iterator.next().key.startsWith('org.eclipse.core.runtime'))
+                  iterator.remove()
               newValue = packagesToString(newValue)
             } else
               newValue = details.mergeValue ?: details.baseValue
@@ -190,7 +194,7 @@ class ManifestUtils {
   public static Map parsePackages(packagesString) {
     def packages = [:]
     if(packagesString)
-      packagesString.eachMatch '([\\w\\-\\.]+)(((;[\\w\\-\\.]+(:?=((("[^"]*")|([\\w\\-\\.]+))))?)*),?)', {
+      packagesString.eachMatch '([\\w\\-\\.]+)(((;[\\w\\-\\.]+((:?)=((("[^"]*")|([\\w\\-\\.]+))))?)*),?)', {
         packages[it[1]] = it[3]
       }
     return packages
