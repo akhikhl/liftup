@@ -13,7 +13,7 @@ class ManifestUtils {
 
     project.task('extendManifest') {
       dependsOn project.tasks.classes
-      inputs.files project.configurations.runtime
+      inputs.files { project.configurations.runtime }
       outputs.files manifestFile
       doLast {
         // fix for problem with non-existing classesDir, when the project contains no java/groovy sources
@@ -26,7 +26,9 @@ class ManifestUtils {
           setClassesDir project.sourceSets.main.output.classesDir
           setClasspath project.configurations.runtime
         }
-
+        
+        m = m.effectiveManifest
+        
         project.sourceSets.main.java.srcDirs.each { File srcDir ->
           project.fileTree(srcDir).include('**/Activator.java').files.each { File activatorSourceFile ->
             String activator = activatorSourceFile.absolutePath.substring(srcDir.absolutePath.length())
@@ -34,8 +36,8 @@ class ManifestUtils {
               activator = activator.substring(1)
             activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
             activator = activator.replaceAll('/', '.')
-            m.instructionReplace 'Bundle-Activator', activator
-            m.instructionReplace 'Bundle-ActivationPolicy', 'lazy'
+            m.attributes 'Bundle-Activator': activator
+            m.attributes 'Bundle-ActivationPolicy': 'lazy'
           }
         }
 
@@ -48,7 +50,7 @@ class ManifestUtils {
             if(!locatizationDir.exists()) {
               def localizationFiles = new FileNameFinder().getFileNames(srcDir.absolutePath, 'plugin*.properties')
               if(localizationFiles)
-                m.instructionReplace 'Bundle-Localization', 'plugin'
+                m.attributes 'Bundle-Localization': 'plugin'
             }
             if(new File(srcDir, 'plugin.xml').exists())
               pluginConfigFile = new File(srcDir, 'plugin.xml')
@@ -56,27 +58,27 @@ class ManifestUtils {
         }
 
         if(pluginConfigFile) {
-          m.setSymbolicName "${project.name}; singleton:=true"
+          def importPackages = parsePackages(m.attributes['Import-Package'])
+          m.attributes 'Bundle-SymbolicName': "${project.name}; singleton:=true"
           project.logger.info 'Analyzing class usage in {}/plugin.xml', project.name
           def pluginConfig = new XmlParser().parse(pluginConfigFile)
           def classes = pluginConfig.extension.'**'.findAll({ it.'@class' })*.'@class' + pluginConfig.extension.'**'.findAll({ it.'@contributorClass' })*.'@contributorClass'
           def packages = classes.collect { it.substring(0, it.lastIndexOf('.')) }.unique(false)
-          def packagesToImport = []
           packages.each { String packageName ->
             String packagePath = packageName.replaceAll(/\./, '/')
             if(project.sourceSets.main.resources.srcDirs.find { new File(it, packagePath).exists() })
               project.logger.info 'Found package {} within {}, no import needed', packageName, project.name
             else {
               project.logger.info 'Did not find package {} within {}, will be imported', packageName, project.name
-              packagesToImport.add packageName
+              importPackages[packageName] = ''
             }
           }
-          packagesToImport.each { m.instruction 'Import-Package', it }
+          m.attributes 'Import-Package': packagesToString(importPackages)
         }
         else
-          m.setSymbolicName project.name
+          m.attributes 'Bundle-SymbolicName': project.name
 
-        m.instruction 'Require-Bundle', 'org.eclipse.core.runtime'
+        m.attributes 'Require-Bundle': 'org.eclipse.core.runtime'
 
         manifestFile.parentFile.mkdirs()
         manifestFile.withWriter { m.writeTo it }
