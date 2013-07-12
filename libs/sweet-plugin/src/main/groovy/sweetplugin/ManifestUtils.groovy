@@ -77,8 +77,20 @@ class ManifestUtils {
         }
         else
           m.attributes 'Bundle-SymbolicName': project.name
-
-        m.attributes 'Require-Bundle': 'org.eclipse.core.runtime'
+          
+        def platformFragment = { artifact ->
+          PlatformConfig.supported_oses.find { os ->
+            PlatformConfig.supported_archs.find { arch ->
+              artifact.name.endsWith PlatformConfig.map_os_to_suffix[os] + '.' + PlatformConfig.map_arch_to_suffix[arch]
+            }
+          }
+        }
+          
+        def requiredBundles = [ 'org.eclipse.core.runtime' ] as LinkedHashSet
+        project.configurations.compile.allDependencies.each({ if(it.name.startsWith('org.eclipse.') && !platformFragment(it)) requiredBundles.add(it.name) })
+        m.attributes 'Require-Bundle': requiredBundles.sort().join(',')
+        
+        // m.attributes 'Require-Bundle': 'org.eclipse.core.runtime'
 
         manifestFile.parentFile.mkdirs()
         manifestFile.withWriter { m.writeTo it }
@@ -109,7 +121,7 @@ class ManifestUtils {
                */
               def iterator = newValue.entrySet().iterator()
               while (iterator.hasNext())
-                if (iterator.next().key.startsWith('org.eclipse.core.runtime'))
+                if (iterator.next().key.startsWith('org.eclipse'))
                   iterator.remove()
               newValue = packagesToString(newValue)
             } else
