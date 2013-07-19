@@ -85,9 +85,16 @@ class ManifestUtils {
             }
           }
         }
+        
+        def languageFragment = { artifact ->
+          artifact.name.contains '.nl_'
+        }
           
         def requiredBundles = [ 'org.eclipse.core.runtime' ] as LinkedHashSet
-        project.configurations.compile.allDependencies.each({ if(it.name.startsWith('org.eclipse.') && !platformFragment(it)) requiredBundles.add(it.name) })
+        project.configurations.compile.allDependencies.each {
+          if(it.name.startsWith('org.eclipse.') && !platformFragment(it) && !languageFragment(it))
+            requiredBundles.add it.name
+        }
         m.attributes 'Require-Bundle': requiredBundles.sort().join(',')
         
         // m.attributes 'Require-Bundle': 'org.eclipse.core.runtime'
