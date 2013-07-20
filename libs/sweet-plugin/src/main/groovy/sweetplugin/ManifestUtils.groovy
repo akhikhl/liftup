@@ -90,7 +90,7 @@ class ManifestUtils {
           artifact.name.contains '.nl_'
         }
           
-        def requiredBundles = [ 'org.eclipse.core.runtime' ] as LinkedHashSet
+        def requiredBundles = [ 'org.eclipse.core.runtime', 'org.eclipse.core.resources' ] as LinkedHashSet
         project.configurations.compile.allDependencies.each {
           if(it.name.startsWith('org.eclipse.') && !platformFragment(it) && !languageFragment(it))
             requiredBundles.add it.name
