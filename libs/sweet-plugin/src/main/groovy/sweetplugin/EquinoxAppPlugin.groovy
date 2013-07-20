@@ -95,7 +95,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               }
             }
             if(!bundleName) {
-              def match = baseLibName =~ /(.+)-((\d+\.)*(\d+)[a-zA-Z_-]*)/
+              def match = baseLibName =~ /(.+)-([\d+\.]*\d+[a-zA-Z_-]*)/
               if(match) {
                 bundleName = match[0][1]
                 bundleVersion = match[0][2]
@@ -107,8 +107,18 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(match)
                 bundleVersion = match[0][1] + match[0][2] + match[0][3] + match[0][4].replaceAll(/\./, '-')
             }
+            if(bundleVersion) {
+              def match = bundleVersion =~ /([\d+\.]*\d+)([a-zA-Z_-]+)/
+              if(match) {
+                def suffix = match[0][2]
+                if(!suffix.startsWith('-'))
+                  suffix = '-' + suffix
+                bundleName += suffix
+                bundleVersion = match[0][1]
+              }
+            }
             bundleName = bundleName ?: baseLibName
-            bundleVersion = bundleVersion ?: '1.0'
+            bundleVersion = bundleVersion ?: '1.0'            
             String bundlePackageName = "${bundleName}-bundle-${bundleVersion}"
             File manifestFile = new File("${wrappedLibsDir}/${bundlePackageName}-MANIFEST.MF")
             def m = project.osgiManifest {
