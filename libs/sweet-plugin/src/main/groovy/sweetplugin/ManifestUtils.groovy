@@ -41,7 +41,7 @@ class ManifestUtils {
           }
         }
 
-        File pluginConfigFile = null
+        def pluginConfig = null
         project.sourceSets.main.resources.srcDirs.each { File srcDir ->
           if(srcDir.exists()) {
             File locatizationDir = new File(srcDir, 'OSGI-INF/l10n')
@@ -53,15 +53,14 @@ class ManifestUtils {
                 m.attributes 'Bundle-Localization': 'plugin'
             }
             if(new File(srcDir, 'plugin.xml').exists())
-              pluginConfigFile = new File(srcDir, 'plugin.xml')
+              pluginConfig = new XmlParser().parse(new File(srcDir, 'plugin.xml'))
           }
         }
 
-        if(pluginConfigFile) {
+        if(pluginConfig) {
           def importPackages = parsePackages(m.attributes['Import-Package'])
           m.attributes 'Bundle-SymbolicName': "${project.name}; singleton:=true"
           project.logger.info 'Analyzing class usage in {}/plugin.xml', project.name
-          def pluginConfig = new XmlParser().parse(pluginConfigFile)
           def classes = pluginConfig.extension.'**'.findAll({ it.'@class' })*.'@class' + pluginConfig.extension.'**'.findAll({ it.'@contributorClass' })*.'@contributorClass'
           def packages = classes.collect { it.substring(0, it.lastIndexOf('.')) }.unique(false)
           packages.each { String packageName ->
@@ -91,13 +90,13 @@ class ManifestUtils {
         }
           
         def requiredBundles = [ 'org.eclipse.core.runtime', 'org.eclipse.core.resources' ] as LinkedHashSet
+        if(pluginConfig && pluginConfig.extension.find { it.'@point'.startsWith 'org.eclipse.core.expressions' })
+          requiredBundles.add 'org.eclipse.core.expressions'
         project.configurations.compile.allDependencies.each {
           if(it.name.startsWith('org.eclipse.') && !platformFragment(it) && !languageFragment(it))
             requiredBundles.add it.name
         }
         m.attributes 'Require-Bundle': requiredBundles.sort().join(',')
-        
-        // m.attributes 'Require-Bundle': 'org.eclipse.core.runtime'
 
         manifestFile.parentFile.mkdirs()
         manifestFile.withWriter { m.writeTo it }
