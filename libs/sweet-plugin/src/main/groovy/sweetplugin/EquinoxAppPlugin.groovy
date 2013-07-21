@@ -107,9 +107,11 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(match)
                 bundleVersion = match[0][1] + match[0][2] + match[0][3] + match[0][4].replaceAll(/\./, '-')
             }
+            String fragmentHost
             if(bundleVersion) {
               def match = bundleVersion =~ /([\d+\.]*\d+)([a-zA-Z_-]+)/
               if(match) {
+                fragmentHost = bundleName
                 def suffix = match[0][2]
                 if(!suffix.startsWith('-'))
                   suffix = '-' + suffix
@@ -129,6 +131,8 @@ class EquinoxAppPlugin implements Plugin<Project> {
               setClasspath project.files(lib)
               instruction 'Bundle-Classpath', lib.name
               instruction 'Wrapped-Library', lib.name
+              if(fragmentHost)
+                instruction 'Fragment-Host', fragmentHost
             }
             m = m.effectiveManifest
             def packages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
