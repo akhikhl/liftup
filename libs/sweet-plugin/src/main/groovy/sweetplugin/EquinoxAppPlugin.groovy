@@ -111,11 +111,12 @@ class EquinoxAppPlugin implements Plugin<Project> {
             if(bundleVersion) {
               def match = bundleVersion =~ /([\d+\.]*\d+)([a-zA-Z_-]+)/
               if(match) {
-                fragmentHost = bundleName
                 def suffix = match[0][2]
-                if(!suffix.startsWith('-'))
-                  suffix = '-' + suffix
-                bundleName += suffix
+                if(suffix.startsWith('-'))
+                  suffix = suffix.substring(1)
+                if(suffix != 'patch')
+                  fragmentHost = bundleName
+                bundleName += '-' + suffix
                 bundleVersion = match[0][1]
               }
             }
@@ -159,8 +160,6 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'org.jaxen.jdom'
               packages.remove 'org.jaxen'
             }
-            else if(bundleName.startsWith('saxon'))
-              packages.remove 'com.saxonica.validate'
             else if(bundleName.startsWith('ojdbc')) {
               packages.remove 'javax.resource'
               packages.remove 'javax.resource.spi'
@@ -169,6 +168,12 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'oracle.i18n.text.converter'
               packages.remove 'oracle.ons'
               packages.remove 'oracle.security.pki'
+            }
+            else if(bundleName.startsWith('saxon'))
+              packages.remove 'com.saxonica.validate'
+            else if(bundleName.startsWith('svnkit')) {
+              packages = packages.findAll { !it.key.startsWith('org.tmatesoft.sqljet') }
+              packages.remove 'org.tigris.subversion.javahl'            
             }
             else if(bundleName == 'xalan')
               packages.remove 'sun.io'
