@@ -152,6 +152,11 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'javax.media.jai'
               packages = packages.findAll { !it.key.startsWith('org.apache.tools.ant') }
             }
+            else if(bundleName.startsWith('jaxb-impl')) {
+              packages = packages.findAll { !it.key.startsWith('com.sun.xml.fastinfoset') }
+              packages.remove 'org.jvnet.fastinfoset'
+              packages.remove 'org.jvnet.staxex'
+            }
             else if(bundleName.startsWith('jdom')) {
               packages.remove 'oracle.xml.parser'
               packages.remove 'oracle.xml.parser.v2'
