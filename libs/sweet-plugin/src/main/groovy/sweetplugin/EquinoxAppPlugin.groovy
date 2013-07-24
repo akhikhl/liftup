@@ -226,7 +226,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               launchOption = '@2:start'
             else if(pluginName == 'org.eclipse.core.runtime')
               launchOption = '@3start'
-            else if(pluginName == 'org.eclipse.e4.ui.model.workbench')
+            else if(pluginName == 'org.eclipse.e4.ui.model.workbench' || pluginName == 'jersey-core')
               launchOption = '@4:start'
             if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
               bundleLaunchList[pluginName] = "reference\\:file\\:${file.absolutePath}${launchOption}"
@@ -378,7 +378,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
                 launchOption = '@2:start'
               else if(pluginName == 'org.eclipse.core.runtime')
                 launchOption = '@3:start'
-              else if(pluginName == 'org.eclipse.e4.ui.model.workbench')
+              else if(pluginName == 'org.eclipse.e4.ui.model.workbench' || pluginName == 'jersey-core')
                 launchOption = '@4:start'
               if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
                 bundleLaunchList[pluginName] = "reference\\:file\\:${file.name}${launchOption}"
