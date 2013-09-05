@@ -114,14 +114,16 @@ class EquinoxAppPlugin implements Plugin<Project> {
                 def suffix = match[0][2]
                 if(suffix.startsWith('-'))
                   suffix = suffix.substring(1)
-                if(suffix != 'patch')
-                  fragmentHost = bundleName
-                bundleName += '-' + suffix
+                if(suffix) {
+                  if(suffix != 'patch')
+                    fragmentHost = bundleName
+                  bundleName += '-' + suffix
+                }
                 bundleVersion = match[0][1]
               }
             }
             bundleName = bundleName ?: baseLibName
-            bundleVersion = bundleVersion ?: '1.0'            
+            bundleVersion = bundleVersion ?: '1.0'
             String bundlePackageName = "${bundleName}-bundle-${bundleVersion}"
             File manifestFile = new File("${wrappedLibsDir}/${bundlePackageName}-MANIFEST.MF")
             def m = project.osgiManifest {
@@ -178,7 +180,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'com.saxonica.validate'
             else if(bundleName.startsWith('svnkit')) {
               packages = packages.findAll { !it.key.startsWith('org.tmatesoft.sqljet') }
-              packages.remove 'org.tigris.subversion.javahl'            
+              packages.remove 'org.tigris.subversion.javahl'
             }
             else if(bundleName == 'xalan')
               packages.remove 'sun.io'
