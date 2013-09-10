@@ -429,7 +429,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
             String equinoxLauncherName = 'plugins/' + equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')
 
-            def launchParameters = project.equinox.launchParameters
+            def launchParameters = project.equinox.launchParameters.clone()
 
             project.sourceSets.main.resources.srcDirs.each { File srcDir ->
               File splashFile = new File(srcDir, 'splash.bmp')
