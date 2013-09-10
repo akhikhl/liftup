@@ -481,13 +481,28 @@ language: $language
             task.dependsOn buildTaskName
             project.tasks.build.dependsOn task
             from new File(productOutputDir), { into project.name }
-            if(product.jre && new File(product.jre).isDirectory())
-              from product.jre, { into "${project.name}/jre" }
+            if(product.jre) {
+              def file = new File(product.jre)
+              if(!file.isAbsolute())
+                file = new File(project.projectDir, file.path)
+              if(file.exists()) {
+                if(file.isDirectory())
+                  from file, { into "${project.name}/jre" }
+                else
+                  logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
+              }
+              else
+                logger.warn 'JRE folder {} does not exist', file.absolutePath
+            }
             if(project.equinox.additionalFilesToArchive)
               for(def f in project.equinox.additionalFilesToArchive) {
                 File file = f instanceof File ? f : new File(f)
+                if(!file.isAbsolute())
+                  file = new File(project.projectDir, file.path)
                 if(file.exists())
                   from file, { into project.name }
+                else
+                  logger.warn 'additional file/folder {} does not exist', file.absolutePath
               }
             destinationDir = new File(outputBaseDir)
             classifier = suffix
