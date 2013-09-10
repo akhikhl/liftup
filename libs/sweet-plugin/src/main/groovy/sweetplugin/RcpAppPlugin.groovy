@@ -25,12 +25,13 @@ class RcpAppPlugin implements Plugin<Project> {
         String arch = product.arch ?: PlatformConfig.current_arch
         String language = product.language ?: ''
         if(language)
-          project.equinox.product name: "rcp_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language
+          project.equinox.product name: "rcp_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language, jre: product.jre
         else
-          project.equinox.product name: "rcp_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch
+          project.equinox.product name: "rcp_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch, jre: product.jre
       }
 
       project.equinox.archiveProducts = project.rcp.archiveProducts
+      project.equinox.additionalFilesToArchive = project.rcp.additionalFilesToArchive
       project.equinox.launchParameters = project.rcp.launchParameters
     }
   }

@@ -11,6 +11,12 @@ class EquinoxAppPluginExtension {
   private boolean defaultProducts = true
   def products = [[ name: 'default' ]]
 
+  def additionalFilesToArchive = []
+
+  def archiveFile(file) {
+    additionalFilesToArchive.add file
+  }
+
   def beforeProductGeneration(newValue) {
     beforeProductGeneration.add newValue
   }

@@ -47,12 +47,13 @@ class EclipseIdeAppPlugin implements Plugin<Project> {
         String arch = product.arch ?: PlatformConfig.current_arch
         String language = product.language ?: ''
         if(language)
-          project.equinox.product name: "eclipse_ide_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language
+          project.equinox.product name: "eclipse_ide_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language, jre: product.jre
         else
-          project.equinox.product name: "eclipse_ide_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch
+          project.equinox.product name: "eclipse_ide_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch, jre: product.jre
       }
 
       project.equinox.archiveProducts = project.eclipseIde.archiveProducts
+      project.equinox.additionalFilesToArchive = project.eclipseIde.additionalFilesToArchive
       project.equinox.launchParameters = project.eclipseIde.launchParameters
     }
   }

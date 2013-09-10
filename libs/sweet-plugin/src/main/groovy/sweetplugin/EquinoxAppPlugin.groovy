@@ -480,8 +480,15 @@ language: $language
           project.task(archiveTaskName, type: archiveType) { task ->
             task.dependsOn buildTaskName
             project.tasks.build.dependsOn task
-            from new File(productOutputDir)
-            into "${project.name}"
+            from new File(productOutputDir), { into project.name }
+            if(product.jre && new File(product.jre).isDirectory())
+              from product.jre, { into "${project.name}/jre" }
+            if(project.equinox.additionalFilesToArchive)
+              for(def f in project.equinox.additionalFilesToArchive) {
+                File file = f instanceof File ? f : new File(f)
+                if(file.exists())
+                  from file, { into project.name }
+              }
             destinationDir = new File(outputBaseDir)
             classifier = suffix
             if(archiveType == Tar) {

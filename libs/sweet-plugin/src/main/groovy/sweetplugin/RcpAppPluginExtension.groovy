@@ -9,6 +9,12 @@ class RcpAppPluginExtension {
 
   def launchParameters = []
 
+  def additionalFilesToArchive = []
+
+  def archiveFile(file) {
+    additionalFilesToArchive.add file
+  }
+
   def launchParameter(String newValue) {
     launchParameters.add newValue
   }
