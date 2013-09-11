@@ -353,10 +353,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
             if(file.isDirectory())
               jreFolder = file
             else
-              logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
+              project.logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
           }
           else
-            logger.warn 'JRE folder {} does not exist', file.absolutePath
+            project.logger.warn 'JRE folder {} does not exist', file.absolutePath
         }
 
         String productOutputDir = "${outputBaseDir}/${project.name}-${project.version}"
@@ -519,30 +519,37 @@ language: $language
             task.dependsOn buildTaskName
             project.tasks.build.dependsOn task
             from new File(productOutputDir), { into project.name }
-            /*
-             if(product.jre) {
-             def file = new File(product.jre)
-             if(!file.isAbsolute())
-             file = new File(project.projectDir, file.path)
-             if(file.exists()) {
-             if(file.isDirectory())
-             from file, { into "${project.name}/jre" }
-             else
-             logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
-             }
-             else
-             logger.warn 'JRE folder {} does not exist', file.absolutePath
-             }
-             */
-            if(project.equinox.additionalFilesToArchive)
-              for(def f in project.equinox.additionalFilesToArchive) {
-                File file = f instanceof File ? f : new File(f)
-                if(!file.isAbsolute())
-                  file = new File(project.projectDir, file.path)
+            def addedFiles = new HashSet()
+            def addFileToArchive = { f, Closure closure ->
+              File file = f instanceof File ? f : new File(f)
+              if(!file.isAbsolute())
+                file = new File(project.projectDir, file.path)
+              if(!addedFiles.contains(file.absolutePath)) {
+                addedFiles.add(file.absolutePath)
                 if(file.exists())
-                  from file, { into project.name }
+                  from file, closure
                 else
-                  logger.warn 'additional file/folder {} does not exist', file.absolutePath
+                  project.logger.info 'additional file/folder {} does not exist', file.absolutePath
+              }
+            }
+            if(project.equinox.additionalFilesToArchive)
+              for(def f in project.equinox.additionalFilesToArchive)
+                addFileToArchive f, { into project.name }
+            if(product.archiveFiles)
+              for(def f in product.archiveFiles)
+                addFileToArchive f, { into project.name }
+            addFileToArchive 'CHANGES', { into project.name }
+            addFileToArchive 'README', { into project.name }
+            addFileToArchive 'LICENSE', { into project.name }
+            if(platform == 'windows')
+              addFileToArchive 'appicon.ico', {
+                into project.name
+                rename 'appicon.ico', "${project.name}.ico"
+              }
+            else
+              addFileToArchive 'appicon.xpm', {
+                into project.name
+                rename 'appicon.xpm', "${project.name}.xpm"
               }
             destinationDir = new File(outputBaseDir)
             classifier = suffix
