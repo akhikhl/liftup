@@ -344,6 +344,21 @@ class EquinoxAppPlugin implements Plugin<Project> {
         else
           launchers = ['shell']
 
+        def jreFolder = null
+        if(product.jre) {
+          def file = new File(product.jre)
+          if(!file.isAbsolute())
+            file = new File(project.projectDir, file.path)
+          if(file.exists()) {
+            if(file.isDirectory())
+              jreFolder = file
+            else
+              logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
+          }
+          else
+            logger.warn 'JRE folder {} does not exist', file.absolutePath
+        }
+
         String productOutputDir = "${outputBaseDir}/${project.name}-${project.version}"
         if(suffix)
           productOutputDir += '-' + suffix
@@ -362,6 +377,9 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
           if(productConfig)
             inputs.files productConfig.files
+
+          if(jreFolder)
+            inputs.dir jreFolder
 
           outputs.dir productOutputDir
 
@@ -429,6 +447,12 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
             String equinoxLauncherName = 'plugins/' + equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')
 
+            if(jreFolder)
+              project.copy {
+                from jreFolder
+                into "$productOutputDir/jre"
+              }
+
             def launchParameters = project.equinox.launchParameters.clone()
 
             project.sourceSets.main.resources.srcDirs.each { File srcDir ->
@@ -447,14 +471,28 @@ class EquinoxAppPlugin implements Plugin<Project> {
               launchParameters = ' ' + launchParameters
 
             if(launchers.contains('shell')) {
+              def javaLocation = ''
+              if(jreFolder) {
+                javaLocation = '''SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+${DIR}/jre/bin/'''
+              }
               File launchScriptFile = new File("${productOutputDir}/${project.name}.sh")
-              launchScriptFile.text = "#!/bin/bash\njava -jar ${equinoxLauncherName}$launchParameters \"\$@\""
+              launchScriptFile.text = "#!/bin/bash\n${javaLocation}java -jar ${equinoxLauncherName}$launchParameters \"\$@\""
               launchScriptFile.setExecutable(true)
             }
 
             if(launchers.contains('windows')) {
+              def javaLocation = ''
+              if(jreFolder)
+                javaLocation = '%~dp0/jre/bin/'
               File launchScriptFile = new File("${productOutputDir}/${project.name}.bat")
-              launchScriptFile.text = "@java -jar ${equinoxLauncherName}$launchParameters %*"
+              launchScriptFile.text = "@${javaLocation}java -jar ${equinoxLauncherName}$launchParameters %*"
             }
 
             String versionFileName = "${productOutputDir}/VERSION"
@@ -481,19 +519,21 @@ language: $language
             task.dependsOn buildTaskName
             project.tasks.build.dependsOn task
             from new File(productOutputDir), { into project.name }
-            if(product.jre) {
-              def file = new File(product.jre)
-              if(!file.isAbsolute())
-                file = new File(project.projectDir, file.path)
-              if(file.exists()) {
-                if(file.isDirectory())
-                  from file, { into "${project.name}/jre" }
-                else
-                  logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
-              }
-              else
-                logger.warn 'JRE folder {} does not exist', file.absolutePath
-            }
+            /*
+             if(product.jre) {
+             def file = new File(product.jre)
+             if(!file.isAbsolute())
+             file = new File(project.projectDir, file.path)
+             if(file.exists()) {
+             if(file.isDirectory())
+             from file, { into "${project.name}/jre" }
+             else
+             logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
+             }
+             else
+             logger.warn 'JRE folder {} does not exist', file.absolutePath
+             }
+             */
             if(project.equinox.additionalFilesToArchive)
               for(def f in project.equinox.additionalFilesToArchive) {
                 File file = f instanceof File ? f : new File(f)
