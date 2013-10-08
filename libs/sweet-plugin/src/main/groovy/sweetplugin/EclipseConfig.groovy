@@ -125,6 +125,7 @@ class EclipseConfig {
           String localizedConfigName = "product_eclipse_ide_${platform}_${arch}_${language}"
           def localizedConfig = project.configurations.create(localizedConfigName)
           localizedConfig.extendsFrom config
+          localizedConfig.extendsFrom project.configurations.findByName("product_rcp_${platform}_${arch}_${language}")
           addEclipseIdeDependencies project, localizedConfigName, platform, arch, language
         }
       }
