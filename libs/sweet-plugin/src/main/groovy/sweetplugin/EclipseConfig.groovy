@@ -5,7 +5,7 @@ import org.gradle.api.Project
 class EclipseConfig {
 
   // eclipseGroup must be the same as in "eclipseDownloadConfig.gradle"
-  public static final String eclipseGroup = 'eclipse-juno'
+  public static final String eclipseGroup = 'eclipse-kepler'
 
   public static void addEclipseBundleDependencies(Project project) {
     project.dependencies {
@@ -85,11 +85,8 @@ class EclipseConfig {
   }
 
   public static void addRcpDependencies(Project project, String configName, String platform, String arch, String language) {
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.core.filesystem.${PlatformConfig.map_os_to_filesystem_suffix[platform]}.${PlatformConfig.map_arch_to_suffix[arch]}.nl_${language}:+"
     project.dependencies.add configName, "${eclipseGroup}:org.eclipse.core.net.${PlatformConfig.map_os_to_filesystem_suffix[platform]}.${PlatformConfig.map_arch_to_suffix[arch]}.nl_${language}:+"
     project.dependencies.add configName, "${eclipseGroup}:org.eclipse.jface.nl_${language}:+"
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.swt.nl_${language}:+"
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.map_os_to_suffix[platform]}.${PlatformConfig.map_arch_to_suffix[arch]}.nl_${language}:+"
     project.dependencies.add configName, "${eclipseGroup}:org.eclipse.ui.nl_${language}:+"
   }
 
@@ -107,8 +104,6 @@ class EclipseConfig {
 
   public static void addSwtAppDependencies(Project project, String configName, String platform, String arch, String language) {
     project.dependencies.add configName, "${eclipseGroup}:org.eclipse.jface.nl_${language}:+"
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.swt.nl_${language}:+"
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.map_os_to_suffix[platform]}.${PlatformConfig.map_arch_to_suffix[arch]}.nl_${language}:+"
   }
 
   public static void addSwtLibDependencies(Project project) {
