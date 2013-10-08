@@ -46,10 +46,15 @@ class EclipseIdeAppPlugin implements Plugin<Project> {
         String platform = product.platform ?: PlatformConfig.current_os
         String arch = product.arch ?: PlatformConfig.current_arch
         String language = product.language ?: ''
+        def archiveFiles = []
+        if(product.archiveFile)
+          archiveFiles.add product.archiveFile
+        if(product.archiveFiles)
+          archiveFiles.addAll product.archiveFiles
         if(language)
-          project.equinox.product name: "eclipse_ide_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language, jre: product.jre
+          project.equinox.product name: "eclipse_ide_${platform}_${arch}_$language", launcher: launchers[platform], suffix: "${platform}-${arch}-${language}", platform: platform, arch: arch, language: language, jre: product.jre, archiveFiles: archiveFiles
         else
-          project.equinox.product name: "eclipse_ide_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch, jre: product.jre
+          project.equinox.product name: "eclipse_ide_${platform}_${arch}", launcher: launchers[platform], suffix: "${platform}-${arch}", platform: platform, arch: arch, jre: product.jre, archiveFiles: archiveFiles
       }
 
       project.equinox.archiveProducts = project.eclipseIde.archiveProducts
