@@ -1,7 +1,7 @@
 apply plugin: 'groovy'
 
 dependencies {
-  compile 'org.codehaus.groovy:groovy-all:1.8.6'
+  compile 'org.codehaus.groovy:groovy-all:2.1.7'
   compile gradleApi()
   compile 'commons-io:commons-io:2.4'
   compile 'commons-codec:commons-codec:1.8'

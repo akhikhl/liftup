@@ -8,13 +8,13 @@ buildscript {
   apply plugin: 'maven'
   
   dependencies {
-    classpath 'org.akhikhl.sweet:sweet-plugin:0.0.2'
+    classpath 'org.akhikhl.sweet:sweet-plugin:0.0.3'
   }
 }
 
 allprojects {
   group = 'org.akhikhl.sweet.examples'
-  version = '0.0.2'
+  version = '0.0.3'
 }
 
 subprojects {
