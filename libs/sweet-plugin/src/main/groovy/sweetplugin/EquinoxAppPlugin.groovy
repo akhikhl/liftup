@@ -222,14 +222,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
             if(bundleLaunchList.containsKey(pluginName))
               return
             String launchOption = ''
-            if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.event')
-              launchOption = '@1:start'
-            else if(pluginName == 'org.eclipse.equinox.common')
+            if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.common')
               launchOption = '@2:start'
-            else if(pluginName == 'org.eclipse.core.runtime')
-              launchOption = '@3start'
-            else if(pluginName == 'org.eclipse.e4.ui.model.workbench' || pluginName == 'jersey-core')
-              launchOption = '@4:start'
+            else if(pluginName == 'org.eclipse.core.runtime' || pluginName == 'jersey-core')
+              launchOption = '@start'
             if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
               bundleLaunchList[pluginName] = "reference\\:file\\:${file.absolutePath}${launchOption}"
           }
@@ -272,7 +268,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
                 configWriter.println "osgi.splashLocation=${splashFile.absolutePath}"
             }
             configWriter.println "osgi.framework=file\\:${frameworkFile.absolutePath}"
-            configWriter.println 'osgi.bundles.defaultStartLevel=5'
+            configWriter.println 'osgi.bundles.defaultStartLevel=4'
             configWriter.println 'osgi.bundles=' + bundleLaunchList.values().join(',\\\n  ')
           }
 
@@ -392,14 +388,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(bundleLaunchList.containsKey(pluginName))
                 return
               String launchOption = ''
-              if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.event')
-                launchOption = '@1:start'
-              else if(pluginName == 'org.eclipse.equinox.common')
+              if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.common')
                 launchOption = '@2:start'
-              else if(pluginName == 'org.eclipse.core.runtime')
-                launchOption = '@3:start'
-              else if(pluginName == 'org.eclipse.e4.ui.model.workbench' || pluginName == 'jersey-core')
-                launchOption = '@4:start'
+              else if(pluginName == 'org.eclipse.core.runtime' || pluginName == 'jersey-core')
+                launchOption = '@start'
               if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
                 bundleLaunchList[pluginName] = "reference\\:file\\:${file.name}${launchOption}"
               project.copy {
@@ -437,7 +429,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(productId)
                 configWriter.println "eclipse.product=$productId"
               configWriter.println "osgi.framework=file\\:plugins/${frameworkFile.name}"
-              configWriter.println 'osgi.bundles.defaultStartLevel=5'
+              configWriter.println 'osgi.bundles.defaultStartLevel=4'
               configWriter.println 'osgi.bundles=' + bundleLaunchList.values().join(',\\\n  ')
               project.sourceSets.main.resources.srcDirs.each { File srcDir ->
                 if(new File(srcDir, 'splash.bmp').exists())
