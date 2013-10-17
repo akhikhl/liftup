@@ -186,6 +186,11 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'sun.io'
             else if(bundleName == 'xmlgraphics-commons')
               packages = packages.findAll { !it.key.startsWith('com.sun.image.codec') }
+            else if(bundleName == 'jaxen') {
+              packages.remove 'nu.xom'
+              packages = packages.findAll { !it.key.startsWith('org.jdom') && !it.key.startsWith('org.dom4j') }
+            } else if(bundleName == 'xercesImpl')
+              packages.remove 'sun.io'
             m.attributes.remove 'Import-Package'
             if(packages)
               m.attributes(['Import-Package': ManifestUtils.packagesToString(packages)])
