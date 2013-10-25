@@ -159,13 +159,19 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'org.jvnet.fastinfoset'
               packages.remove 'org.jvnet.staxex'
             }
-            else if(bundleName.startsWith('jdom')) {
+            else if(bundleName == 'jdom') {
               packages.remove 'oracle.xml.parser'
               packages.remove 'oracle.xml.parser.v2'
               packages.remove 'org.apache.xerces.dom'
               packages.remove 'org.apache.xerces.parsers'
               packages.remove 'org.jaxen.jdom'
               packages.remove 'org.jaxen'
+            }
+            else if(bundleName == 'jdom2') {
+              packages.remove 'oracle.xml.parser'
+              packages.remove 'oracle.xml.parser.v2'
+              packages.remove 'org.apache.xerces.dom'
+              packages.remove 'org.apache.xerces.parsers'
             }
             else if(bundleName.startsWith('ojdbc')) {
               packages.remove 'javax.resource'
