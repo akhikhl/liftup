@@ -1,0 +1,7 @@
+apply plugin: 'groovy'
+apply plugin: 'swt-lib'
+
+dependencies {
+  compile "org.codehaus.groovy:groovy-all:$groovy_version"
+  compile "org.slf4j:slf4j-api:1.7.5"
+}

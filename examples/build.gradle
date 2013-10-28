@@ -12,9 +12,14 @@ buildscript {
   }
 }
 
+ext {
+  groovy_version = '2.0.7'
+  sweet_version = '0.0.3'
+}
+
 allprojects {
   group = 'org.akhikhl.sweet.examples'
-  version = '0.0.3'
+  version = sweet_version
 }
 
 subprojects {
