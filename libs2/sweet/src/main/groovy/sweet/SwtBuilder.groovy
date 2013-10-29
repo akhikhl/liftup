@@ -6,6 +6,7 @@ import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowData
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Button
+import org.eclipse.swt.widgets.Combo
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
@@ -22,7 +23,7 @@ class SwtBuilder {
   def build(Map attrs = [:], widget, Closure closure = null) {
     log.trace 'build: {} {}', widget.class.name, attrs
     attrs.each { String key, value ->
-      if(key != 'style')
+      if(key != 'style' && key != 'model')
         widget[key] = value
     }
     widgetStack.push(widget)
@@ -44,6 +45,14 @@ class SwtBuilder {
 
   def button(Map attrs = [:], Closure closure) {
     build attrs, new Button(widgetStack.last(), attrs.style ?: SWT.PUSH), closure
+  }
+
+  def combo(Map attrs = [:]) {
+    combo attrs, null
+  }
+
+  def combo(Map attrs = [:], Closure closure) {
+    build attrs, new Combo(widgetStack.last(), attrs.style ?: SWT.DROP_DOWN), closure
   }
 
   def composite(Map attrs = [:]) {
