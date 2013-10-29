@@ -3,39 +3,29 @@ package sweet
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
+import org.eclipse.swt.layout.RowData
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Button
+import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Label
 import org.eclipse.swt.widgets.Shell
+import org.eclipse.swt.widgets.Text
 import org.slf4j.LoggerFactory
 
 class SwtBuilder {
 
   private static final log = LoggerFactory.getLogger(SwtBuilder)
 
-  List compStack = []
+  List widgetStack = []
 
-  void build(Closure closure) {
-    closure = closure.rehydrate(this, closure.owner, closure.thisObject)
-    closure()
-  }
-
-  void build(parent, Closure closure) {
-    closure = closure.rehydrate(this, closure.owner, closure.thisObject)
-    compStack.push(parent)
-    try {
-      closure()
-    } finally {
-      compStack.pop()
-    }
-  }
-
-  def button(Map attrs = [:], Closure closure = null) {
-    log.trace 'button: {}', attrs
-    def button = new Button(compStack.last(), attrs.style ?: SWT.PUSH)
+  def build(Map attrs = [:], widget, Closure closure = null) {
+    log.trace 'build: {} {}', widget.class.name, attrs
     attrs.each { String key, value ->
-      button[key] = value
+      if(key != 'style')
+        widget[key] = value
     }
-    compStack.push(button)
+    widgetStack.push(widget)
     try {
       if(closure) {
         closure = closure.rehydrate(this, closure.owner, closure.thisObject)
@@ -43,73 +33,113 @@ class SwtBuilder {
       }
       fixLayoutData()
     } finally {
-      compStack.pop()
+      widgetStack.pop()
     }
-    return button
+    return widget
+  }
+
+  def button(Map attrs = [:]) {
+    button attrs, null
+  }
+
+  def button(Map attrs = [:], Closure closure) {
+    build attrs, new Button(widgetStack.last(), attrs.style ?: SWT.PUSH), closure
+  }
+
+  def composite(Map attrs = [:]) {
+    composite attrs, null
+  }
+
+  def composite(Map attrs = [:], Closure closure) {
+    build attrs, new Composite(widgetStack.last(), attrs.style ?: SWT.NONE), closure
   }
 
   private void fixLayoutData() {
-    if(compStack[-2].layout && !compStack[-1].layoutData) {
-      log.trace 'setting default layout data: {}', compStack[-1]
-      if(compStack[-2].layout instanceof GridLayout)
-        compStack[-1].layoutData = new GridData()
+    if(widgetStack.size() > 1 && widgetStack[-2].layout && !widgetStack[-1].layoutData) {
+      if(widgetStack[-2].layout instanceof GridLayout) {
+        log.trace 'fixing layout data: {}', widgetStack[-1]
+        widgetStack[-1].layoutData = new GridData()
+      }
     }
   }
 
   void gridLayout(Map attrs = [:]) {
     log.trace 'gridLayout: {}', attrs
     def layout = new GridLayout()
+    attrs = [:] << attrs
+    if(attrs.spacing != null) {
+      attrs.horizontalSpacing = attrs.verticalSpacing = attrs.spacing
+      attrs.remove('spacing')
+    }
+    if(attrs.margin != null) {
+      attrs.marginWidth = attrs.marginHeight = attrs.margin
+      attrs.remove('margin')
+    }
     attrs.each { String key, value ->
       layout[key] = value
     }
-    compStack.last().layout = layout
+    widgetStack.last().layout = layout
   }
 
-  void layoutData(Map attrs) {
+  def label(Map attrs = [:]) {
+    label attrs, null
+  }
+
+  def label(Map attrs = [:], Closure closure) {
+    build attrs, new Label(widgetStack.last(), attrs.style ?: SWT.NONE), closure
+  }
+
+  void layoutData(Map attrs = [:]) {
     log.trace 'layoutData: {}', attrs
     def data
-    if(compStack[-2].layout instanceof GridLayout)
+    if(widgetStack[-2].layout instanceof GridLayout)
       data = new GridData()
+    else if(widgetStack[-2].layout instanceof RowLayout)
+      data = new RowData()
     else {
-      log.warn 'Layout data not supported for layout: {}', compStack[-2].layout
+      log.warn 'Layout data not supported for layout: {}', widgetStack[-2].layout
       return
     }
     attrs.each { String key, value ->
       data[key] = value
     }
-    compStack.last().layoutData = data
+    widgetStack.last().layoutData = data
   }
 
   def methodMissing(String name, args) {
     log.trace 'method missing: {}, delegating to swt component', name
-    compStack.last().invokeMethod(name, args)
+    widgetStack.last().invokeMethod(name, args)
   }
 
   def propertyMissing(String name, value) {
     log.trace 'property missing: {}, delegating to swt component', name
-    compStack.last()[name] = value
+    widgetStack.last()[name] = value
   }
 
   def propertyMissing(String name) {
     log.trace 'property missing: {}, delegating to swt component', name
-    compStack.last()[name]
+    widgetStack.last()[name]
   }
 
-  void runWindowApplication(Map attrs = [:], Closure closure) {
+  void rowLayout(Map attrs = [:]) {
+    log.trace 'rowLayout: {}', attrs
+    def layout = new RowLayout()
+    attrs = [:] << attrs
+    if(attrs.margin != null) {
+      attrs.marginWidth = attrs.marginHeight = attrs.marginLeft = attrs.marginRight = attrs.marginTop = attrs.marginBottom = attrs.margin
+      attrs.remove('margin')
+    }
+    attrs.each { String key, value ->
+      layout[key] = value
+    }
+    widgetStack.last().layout = layout
+  }
+
+  void runWindowApplication(Map attrs = [:], Closure closure = null) {
     log.trace 'runWindowApplication: {}', attrs
     Display display = new Display()
     try {
-      def shell = new Shell(display)
-      attrs.each { String key, value ->
-        shell[key] = value
-      }
-      closure = closure.rehydrate(this, closure.owner, closure.thisObject)
-      compStack.push(shell)
-      try {
-        closure()
-      } finally {
-        compStack.pop()
-      }
+      def shell = build(attrs, new Shell(display), closure)
       shell.open()
       while (!shell.isDisposed())
         if (!display.readAndDispatch())
@@ -117,5 +147,13 @@ class SwtBuilder {
     } finally {
       display.dispose()
     }
+  }
+
+  def text(Map attrs = [:]) {
+    text attrs, null
+  }
+
+  def text(Map attrs = [:], Closure closure) {
+    build attrs, new Text(widgetStack.last(), attrs.style ?: SWT.SINGLE | SWT.BORDER), closure
   }
 }

@@ -14,7 +14,7 @@ buildscript {
 
 ext {
   generateSources = true
-  generateJavadoc = true
+  generateJavadoc = false
   sweet_version = '0.0.3'
   groovy_version = '2.0.7'
 }
