@@ -22,19 +22,21 @@ class SwtBuilder {
 
   def build(Map attrs = [:], widget, Closure closure = null) {
     log.trace 'build: {} {}', widget.class.name, attrs
-    attrs.each { String key, value ->
-      if(key != 'style' && key != 'model')
-        widget[key] = value
-    }
-    widgetStack.push(widget)
-    try {
-      if(closure) {
-        closure = closure.rehydrate(this, closure.owner, closure.thisObject)
-        closure()
+    use(SwtCategory) {
+      attrs.each { String key, value ->
+        if(key != 'style' && key != 'model')
+          widget[key] = value
       }
-      fixLayoutData()
-    } finally {
-      widgetStack.pop()
+      widgetStack.push(widget)
+      try {
+        if(closure) {
+          closure = closure.rehydrate(this, closure.owner, closure.thisObject)
+          closure()
+        }
+        fixLayoutData()
+      } finally {
+        widgetStack.pop()
+      }
     }
     return widget
   }
@@ -116,12 +118,12 @@ class SwtBuilder {
   }
 
   def methodMissing(String name, args) {
-    log.trace 'method missing: {}, delegating to swt component', name
+    log.info 'method missing: {}, delegating to swt component', name
     widgetStack.last().invokeMethod(name, args)
   }
 
   def propertyMissing(String name, value) {
-    log.trace 'property missing: {}, delegating to swt component', name
+    log.info 'property missing: {}, delegating to swt component', name
     widgetStack.last()[name] = value
   }
 
