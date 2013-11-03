@@ -1,5 +1,9 @@
 package sweet
 
+import org.eclipse.jface.viewers.ComboViewer
+import org.eclipse.jface.viewers.ContentViewer
+import org.eclipse.jface.viewers.IStructuredContentProvider
+import org.eclipse.jface.viewers.LabelProvider
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
@@ -54,7 +58,22 @@ class SwtBuilder {
   }
 
   def combo(Map attrs = [:], Closure closure) {
-    build attrs, new Combo(widgetStack.last(), attrs.style ?: SWT.DROP_DOWN), closure
+    Combo widget = build attrs, new Combo(widgetStack.last(), attrs.style ?: SWT.DROP_DOWN), closure
+    if(attrs.model != null) {
+      if(widget.data == null)
+        widget.data = [:]
+      ComboViewer viewer = new ComboViewer(widget)
+      widget.data.viewer = viewer
+      switch(attrs.model) {
+        case Collection:
+          setCollectionModel(viewer, attrs.model)
+          break
+        case Map:
+          setMapModel(viewer, attrs.model)
+          break
+      }
+    }
+    return widget
   }
 
   def composite(Map attrs = [:]) {
@@ -158,6 +177,29 @@ class SwtBuilder {
     } finally {
       display.dispose()
     }
+  }
+
+  private void setCollectionModel(ContentViewer viewer, Collection model) {
+    viewer.contentProvider = [
+      dispose: {},
+      getElements: { model.collect { it?.toString() ?: '' }.toArray() },
+      inputChanged: { Object[] args -> }
+    ] as IStructuredContentProvider
+    viewer.input = model
+  }
+
+  private void setMapModel(ContentViewer viewer, Map model) {
+    viewer.contentProvider = [
+      dispose: {},
+      getElements: { model.keySet() },
+      inputChanged: { Object[] args -> }
+    ] as IStructuredContentProvider
+
+    viewer.labelProvider = [
+      getText: { elem -> model[elem] }
+    ] as LabelProvider
+
+    viewer.input = model
   }
 
   def text(Map attrs = [:]) {

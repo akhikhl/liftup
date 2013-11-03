@@ -25,6 +25,12 @@ class SwtCategory {
 
   private static final log = LoggerFactory.getLogger(SwtBuilder)
 
+  public static getSelection(Widget widget) {
+    if(widget?.data?.viewer)
+      return widget?.data?.viewer.selection
+    return widget.metaClass.getProperty(widget.class, widget, 'selection', true, false)
+  }
+
   public static addArmListener(Widget widget, Closure closure) {
     addListener_ widget, closure, ArmListener, { widget.addArmListener(it) }
   }
