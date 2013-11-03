@@ -19,13 +19,15 @@ import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
 import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.Text
+import org.eclipse.swt.widgets.Widget
 import org.slf4j.LoggerFactory
 
 class SwtBuilder {
 
   private static final log = LoggerFactory.getLogger(SwtBuilder)
 
-  List widgetStack = []
+  List<Display> displayStack = []
+  List<Widget> widgetStack = []
 
   def build(Map attrs = [:], widget, Closure closure = null) {
     log.trace 'build: {} {}', widget.class.name, attrs
@@ -87,6 +89,16 @@ class SwtBuilder {
     build attrs, new Composite(widgetStack.last(), attrs.style ?: SWT.NONE), closure
   }
 
+  void display(Closure closure) {
+    displayStack.push(new Display())
+    try {
+      closure()
+    }
+    finally {
+      displayStack.pop().dispose()
+    }
+  }
+
   private void fixLayoutData() {
     if(widgetStack.size() > 1 && widgetStack[-2].layout && !widgetStack[-1].layoutData) {
       if(widgetStack[-2].layout instanceof GridLayout) {
@@ -94,6 +106,14 @@ class SwtBuilder {
         widgetStack[-1].layoutData = new GridData()
       }
     }
+  }
+
+  Display getDisplay() {
+    displayStack.last()
+  }
+
+  Shell getShell() {
+    widgetStack.iterator().reverse().find { it instanceof Shell }
   }
 
   void gridLayout(Map attrs = [:]) {
@@ -144,13 +164,24 @@ class SwtBuilder {
     widgetStack.last().invokeMethod(name, args)
   }
 
+  void modalLoop() {
+    while (!shell.isDisposed()) {
+      try {
+        if (!display.readAndDispatch())
+          display.sleep()
+      } catch(Throwable x) {
+        x.printStackTrace()
+      }
+    }
+  }
+
   def propertyMissing(String name, value) {
     log.trace 'property missing: {}, delegating to swt component', name
     widgetStack.last()[name] = value
   }
 
   def propertyMissing(String name) {
-    log.trace 'property missing: {}, delegating to swt component', name
+    log.info 'property missing: {}, delegating to swt component', name
     widgetStack.last()[name]
   }
 
@@ -168,26 +199,21 @@ class SwtBuilder {
     widgetStack.last().layout = layout
   }
 
-  void runWindowApplication(Map attrs = [:], Closure closure = null) {
-    log.trace 'runWindowApplication: {}', attrs
-    Display display = new Display()
-    try {
-      try {
-        def shell = build(attrs, new Shell(display), closure)
-        shell.open()
-        while (!shell.isDisposed()) {
-          try {
-            if (!display.readAndDispatch())
-              display.sleep()
-          } catch(Throwable x) {
-            x.printStackTrace()
-          }
+  void runApplication(Map attrs = [:]) {
+    runApplication attrs, null
+  }
+
+  void runApplication(Map attrs = [:], Closure closure) {
+    display {
+      shell attrs, {
+        if(closure) {
+          closure.delegate = delegate
+          closure.resolveStrategy = Closure.DELEGATE_FIRST
+          closure()
         }
-      }  catch(Throwable x) {
-        x.printStackTrace()
+        open()
+        modalLoop()
       }
-    } finally {
-      display.dispose()
     }
   }
 
@@ -228,6 +254,14 @@ class SwtBuilder {
         }
 
     viewer.input = model
+  }
+
+  def shell(Map attrs = [:]) {
+    shell attrs, null
+  }
+
+  def shell(Map attrs = [:], Closure closure) {
+    build attrs, new Shell(display), closure
   }
 
   def text(Map attrs = [:]) {
