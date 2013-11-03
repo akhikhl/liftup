@@ -1,5 +1,6 @@
 package sweet
 
+import org.eclipse.jface.resource.ImageRegistry
 import org.eclipse.jface.viewers.ComboViewer
 import org.eclipse.jface.viewers.ContentViewer
 import org.eclipse.jface.viewers.ILabelProvider
@@ -137,6 +138,23 @@ class SwtBuilder {
     displayStack.last()
   }
 
+  Image getResourceImage(String resourceName) {
+    if(display.data == null)
+      display.data = [:]
+    if(display.data.imageRegistry == null)
+      display.data.imageRegistry = new ImageRegistry(display)
+    Image result = display.data.imageRegistry.get(resourceName)
+    if(!result) {
+      this.class.classLoader.getResourceAsStream(resourceName)?.withStream {
+        result = new Image(display, it)
+      }
+      if(!result)
+        throw new RuntimeException("Could not find resource: '$resourceName'")
+      display.data.imageRegistry.put(resourceName, result)
+    }
+    return result
+  }
+
   Shell getShell() {
     widgetStack.iterator().reverse().find { it instanceof Shell }
   }
@@ -184,6 +202,27 @@ class SwtBuilder {
     currentWidget.layoutData = data
   }
 
+  def menu(Map attrs = [:], String name) {
+    menu attrs, name, null
+  }
+
+  def menu(Map attrs = [:], String name, Closure closure) {
+    attrs = [:] << attrs
+    def subMenu = attrs.subMenu
+    if(attrs.image instanceof String)
+      attrs.image = getResourceImage(attrs.image)
+    if(subMenu) {
+      attrs.remove('subMenu')
+      MenuItem item = build attrs, new MenuItem(currentWidget, SWT.CASCADE), closure
+      item.text = name
+      item.menu = build new Menu(shell, SWT.DROP_DOWN), subMenu
+      return item
+    }
+    MenuItem item = build attrs, new MenuItem(currentWidget, SWT.PUSH), closure
+    item.text = name
+    return item
+  }
+
   def menuBar(Map attrs = [:]) {
     menuBar attrs, null
   }
@@ -193,21 +232,11 @@ class SwtBuilder {
   }
 
   def methodMissing(String name, args) {
-    log.info 'methodMissing {} {}', name, args
+    log.trace 'methodMissing {} {}', name, args
     if(currentWidget instanceof Menu) {
-      Map menuAttrs = args.find({ it instanceof Map }) ?: [:]
-      Closure menuClosure = args.find { it instanceof Closure }
-      def subMenu = menuAttrs.subMenu
-      if(subMenu) {
-        menuAttrs = menuAttrs.findAll { it.key != 'subMenu' }
-        MenuItem item = build menuAttrs, new MenuItem(currentWidget, SWT.CASCADE), menuClosure
-        item.text = name
-        item.menu = build new Menu(shell, SWT.DROP_DOWN), subMenu
-        return item
-      }
-      MenuItem item = build menuAttrs, new MenuItem(currentWidget, SWT.PUSH), menuClosure
-      item.text = name
-      return item
+      Map attrs = args.find({ it instanceof Map }) ?: [:]
+      Closure closure = args.find { it instanceof Closure }
+      return menu(attrs, name, closure)
     }
     currentWidget.invokeMethod(name, args)
   }
@@ -226,12 +255,12 @@ class SwtBuilder {
   }
 
   def propertyMissing(String name, value) {
-    log.info 'propertyMissing {}={}', name, value
+    log.trace 'propertyMissing {}={}', name, value
     currentWidget[name] = value
   }
 
   def propertyMissing(String name) {
-    log.info 'propertyMissing {}', name
+    log.trace 'propertyMissing {}', name
     currentWidget[name]
   }
 
