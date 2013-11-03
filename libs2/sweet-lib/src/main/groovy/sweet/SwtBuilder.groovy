@@ -2,9 +2,12 @@ package sweet
 
 import org.eclipse.jface.viewers.ComboViewer
 import org.eclipse.jface.viewers.ContentViewer
+import org.eclipse.jface.viewers.ILabelProvider
+import org.eclipse.jface.viewers.ILabelProviderListener
 import org.eclipse.jface.viewers.IStructuredContentProvider
-import org.eclipse.jface.viewers.LabelProvider
+import org.eclipse.jface.viewers.Viewer
 import org.eclipse.swt.SWT
+import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowData
@@ -169,35 +172,60 @@ class SwtBuilder {
     log.trace 'runWindowApplication: {}', attrs
     Display display = new Display()
     try {
-      def shell = build(attrs, new Shell(display), closure)
-      shell.open()
-      while (!shell.isDisposed())
-        if (!display.readAndDispatch())
-          display.sleep()
+      try {
+        def shell = build(attrs, new Shell(display), closure)
+        shell.open()
+        while (!shell.isDisposed()) {
+          try {
+            if (!display.readAndDispatch())
+              display.sleep()
+          } catch(Throwable x) {
+            x.printStackTrace()
+          }
+        }
+      }  catch(Throwable x) {
+        x.printStackTrace()
+      }
     } finally {
       display.dispose()
     }
   }
 
   private void setCollectionModel(ContentViewer viewer, Collection model) {
-    viewer.contentProvider = [
-      dispose: {},
-      getElements: { model.collect { it?.toString() ?: '' }.toArray() },
-      inputChanged: { Object[] args -> }
-    ] as IStructuredContentProvider
+    viewer.contentProvider = new IStructuredContentProvider() {
+          void dispose() {}
+
+          Object[] getElements(input) {
+            model.collect { it?.toString() ?: '' }.toArray()
+          }
+
+          void inputChanged(Viewer v, oldInput, newInput) {}
+        }
+
     viewer.input = model
   }
 
   private void setMapModel(ContentViewer viewer, Map model) {
-    viewer.contentProvider = [
-      dispose: {},
-      getElements: { model.keySet() },
-      inputChanged: { Object[] args -> }
-    ] as IStructuredContentProvider
+    viewer.contentProvider = new IStructuredContentProvider() {
+          void dispose() {}
 
-    viewer.labelProvider = [
-      getText: { elem -> model[elem] }
-    ] as LabelProvider
+          Object[] getElements(input) {
+            model.keySet() as Object[]
+          }
+
+          void inputChanged(Viewer v, oldInput, newInput) {}
+        }
+
+    viewer.labelProvider = new ILabelProvider() {
+          void addListener(ILabelProviderListener listener) {}
+          void dispose() {}
+          Image getImage(elem) { }
+          String getText(elem) {
+            model[elem]
+          }
+          boolean isLabelProperty(Object elem, String name) { false }
+          void removeListener(ILabelProviderListener listener) {}
+        }
 
     viewer.input = model
   }
