@@ -15,8 +15,11 @@ import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Button
 import org.eclipse.swt.widgets.Combo
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Decorations
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
+import org.eclipse.swt.widgets.Menu
+import org.eclipse.swt.widgets.MenuItem
 import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.Text
 import org.eclipse.swt.widgets.Widget
@@ -29,7 +32,11 @@ class SwtBuilder {
   List<Display> displayStack = []
   List<Widget> widgetStack = []
 
-  def build(Map attrs = [:], widget, Closure closure = null) {
+  def build(widget, Closure closure = null) {
+    build [:], widget, closure
+  }
+
+  def build(Map attrs, widget, Closure closure = null) {
     log.trace 'build: {} {}', widget.class.name, attrs
     use(SwtCategory) {
       attrs.each { String key, value ->
@@ -55,7 +62,7 @@ class SwtBuilder {
   }
 
   def button(Map attrs = [:], Closure closure) {
-    build attrs, new Button(widgetStack.last(), attrs.style ?: SWT.PUSH), closure
+    build attrs, new Button(currentWidget, attrs.style ?: SWT.PUSH), closure
   }
 
   def combo(Map attrs = [:]) {
@@ -86,7 +93,7 @@ class SwtBuilder {
   }
 
   def composite(Map attrs = [:], Closure closure) {
-    build attrs, new Composite(widgetStack.last(), attrs.style ?: SWT.NONE), closure
+    build attrs, new Composite(currentWidget, attrs.style ?: SWT.NONE), closure
   }
 
   void display(Closure closure) {
@@ -99,13 +106,31 @@ class SwtBuilder {
     }
   }
 
+  void endModal(result = true) {
+    if(shell.data == null)
+      shell.data = [:]
+    shell.data.endModal = result
+  }
+
   private void fixLayoutData() {
-    if(widgetStack.size() > 1 && widgetStack[-2].layout && !widgetStack[-1].layoutData) {
+    if(widgetStack.size() > 1 && (widgetStack[-2] instanceof Composite) && widgetStack[-2].layout && !widgetStack[-1].layoutData) {
       if(widgetStack[-2].layout instanceof GridLayout) {
         log.trace 'fixing layout data: {}', widgetStack[-1]
         widgetStack[-1].layoutData = new GridData()
       }
+      else if(widgetStack[-2].layout instanceof RowLayout) {
+        log.trace 'fixing layout data: {}', widgetStack[-1]
+        widgetStack[-1].layoutData = new RowData()
+      }
     }
+  }
+
+  Widget getCurrentWidget() {
+    widgetStack.last()
+  }
+
+  Decorations getDecorations() {
+    widgetStack.iterator().reverse().find { it instanceof Decorations }
   }
 
   Display getDisplay() {
@@ -131,7 +156,7 @@ class SwtBuilder {
     attrs.each { String key, value ->
       layout[key] = value
     }
-    widgetStack.last().layout = layout
+    currentWidget.layout = layout
   }
 
   def label(Map attrs = [:]) {
@@ -139,7 +164,7 @@ class SwtBuilder {
   }
 
   def label(Map attrs = [:], Closure closure) {
-    build attrs, new Label(widgetStack.last(), attrs.style ?: SWT.NONE), closure
+    build attrs, new Label(currentWidget, attrs.style ?: SWT.NONE), closure
   }
 
   void layoutData(Map attrs = [:]) {
@@ -156,17 +181,42 @@ class SwtBuilder {
     attrs.each { String key, value ->
       data[key] = value
     }
-    widgetStack.last().layoutData = data
+    currentWidget.layoutData = data
+  }
+
+  def menuBar(Map attrs = [:]) {
+    menuBar attrs, null
+  }
+
+  def menuBar(Map attrs = [:], Closure closure) {
+    shell.setMenuBar build(attrs, new Menu(currentWidget, attrs.style ?: SWT.BAR), closure)
   }
 
   def methodMissing(String name, args) {
-    log.trace 'method missing: {}, delegating to swt component', name
-    widgetStack.last().invokeMethod(name, args)
+    log.info 'methodMissing {} {}', name, args
+    if(currentWidget instanceof Menu) {
+      Map menuAttrs = args.find({ it instanceof Map }) ?: [:]
+      Closure menuClosure = args.find { it instanceof Closure }
+      def subMenu = menuAttrs.subMenu
+      if(subMenu) {
+        menuAttrs = menuAttrs.findAll { it.key != 'subMenu' }
+        MenuItem item = build menuAttrs, new MenuItem(currentWidget, SWT.CASCADE), menuClosure
+        item.text = name
+        item.menu = build new Menu(shell, SWT.DROP_DOWN), subMenu
+        return item
+      }
+      MenuItem item = build menuAttrs, new MenuItem(currentWidget, SWT.PUSH), menuClosure
+      item.text = name
+      return item
+    }
+    currentWidget.invokeMethod(name, args)
   }
 
-  void modalLoop() {
+  def modalLoop() {
     while (!shell.isDisposed()) {
       try {
+        if(shell.data?.endModal)
+          return shell.data.endModal
         if (!display.readAndDispatch())
           display.sleep()
       } catch(Throwable x) {
@@ -176,13 +226,13 @@ class SwtBuilder {
   }
 
   def propertyMissing(String name, value) {
-    log.trace 'property missing: {}, delegating to swt component', name
-    widgetStack.last()[name] = value
+    log.info 'propertyMissing {}={}', name, value
+    currentWidget[name] = value
   }
 
   def propertyMissing(String name) {
-    log.info 'property missing: {}, delegating to swt component', name
-    widgetStack.last()[name]
+    log.info 'propertyMissing {}', name
+    currentWidget[name]
   }
 
   void rowLayout(Map attrs = [:]) {
@@ -196,25 +246,27 @@ class SwtBuilder {
     attrs.each { String key, value ->
       layout[key] = value
     }
-    widgetStack.last().layout = layout
+    currentWidget.layout = layout
   }
 
-  void runApplication(Map attrs = [:]) {
-    runApplication attrs, null
+  def runApplication(Map shellAttrs = [:]) {
+    runApplication shellAttrs, null
   }
 
-  void runApplication(Map attrs = [:], Closure closure) {
+  def runApplication(Map shellAttrs = [:], Closure closure) {
+    def result
     display {
-      shell attrs, {
+      shell shellAttrs, {
         if(closure) {
           closure.delegate = delegate
           closure.resolveStrategy = Closure.DELEGATE_FIRST
           closure()
         }
         open()
-        modalLoop()
+        result = modalLoop()
       }
     }
+    return result
   }
 
   private void setCollectionModel(ContentViewer viewer, Collection model) {
@@ -269,6 +321,6 @@ class SwtBuilder {
   }
 
   def text(Map attrs = [:], Closure closure) {
-    build attrs, new Text(widgetStack.last(), attrs.style ?: SWT.SINGLE | SWT.BORDER), closure
+    build attrs, new Text(currentWidget, attrs.style ?: SWT.SINGLE | SWT.BORDER), closure
   }
 }
