@@ -9,6 +9,8 @@ import org.eclipse.jface.viewers.IStructuredContentProvider
 import org.eclipse.jface.viewers.Viewer
 import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.Image
+import org.eclipse.swt.layout.FillData
+import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowData
@@ -16,6 +18,7 @@ import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Button
 import org.eclipse.swt.widgets.Combo
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Decorations
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
@@ -23,6 +26,8 @@ import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.MenuItem
 import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.Text
+import org.eclipse.swt.widgets.ToolBar
+import org.eclipse.swt.widgets.ToolItem
 import org.eclipse.swt.widgets.Widget
 import org.slf4j.LoggerFactory
 
@@ -113,8 +118,26 @@ class SwtBuilder {
     shell.data.endModal = result
   }
 
+  void fillLayout(Map attrs = [:]) {
+    log.trace 'fillLayout: {}', attrs
+    def layout = new FillLayout(attrs.type ?: SWT.HORIZONTAL)
+    attrs = [:] << attrs
+    if(attrs.margin != null) {
+      attrs.marginWidth = attrs.marginHeight = attrs.margin
+      attrs.remove('margin')
+    }
+    attrs.each { String key, value ->
+      layout[key] = value
+    }
+    currentWidget.layout = layout
+  }
+
   private void fixLayoutData() {
-    if(widgetStack.size() > 1 && (widgetStack[-2] instanceof Composite) && widgetStack[-2].layout && !widgetStack[-1].layoutData) {
+    if(widgetStack.size() > 1
+    && (widgetStack[-2] instanceof Composite)
+    && widgetStack[-2].layout
+    && (widgetStack[-1] instanceof Control)
+    && !widgetStack[-1].layoutData) {
       if(widgetStack[-2].layout instanceof GridLayout) {
         log.trace 'fixing layout data: {}', widgetStack[-1]
         widgetStack[-1].layoutData = new GridData()
@@ -122,6 +145,10 @@ class SwtBuilder {
       else if(widgetStack[-2].layout instanceof RowLayout) {
         log.trace 'fixing layout data: {}', widgetStack[-1]
         widgetStack[-1].layoutData = new RowData()
+      }
+      else if(widgetStack[-2].layout instanceof FillLayout) {
+        log.trace 'fixing layout data: {}', widgetStack[-1]
+        widgetStack[-1].layoutData = new FillData()
       }
     }
   }
@@ -192,6 +219,8 @@ class SwtBuilder {
       data = new GridData()
     else if(widgetStack[-2].layout instanceof RowLayout)
       data = new RowData()
+    else if(widgetStack[-2].layout instanceof FillLayout)
+      data = new FillData()
     else {
       log.warn 'Layout data not supported for layout: {}', widgetStack[-2].layout
       return
@@ -237,6 +266,11 @@ class SwtBuilder {
       Map attrs = args.find({ it instanceof Map }) ?: [:]
       Closure closure = args.find { it instanceof Closure }
       return menu(attrs, name, closure)
+    }
+    if(currentWidget instanceof ToolBar) {
+      Map attrs = args.find({ it instanceof Map }) ?: [:]
+      Closure closure = args.find { it instanceof Closure }
+      return toolbarItem(attrs, name, closure)
     }
     currentWidget.invokeMethod(name, args)
   }
@@ -351,5 +385,38 @@ class SwtBuilder {
 
   def text(Map attrs = [:], Closure closure) {
     build attrs, new Text(currentWidget, attrs.style ?: SWT.SINGLE | SWT.BORDER), closure
+  }
+
+  def toolBar(Map attrs = [:]) {
+    toolBar attrs, null
+  }
+
+  def toolBar(Map attrs = [:], Closure closure) {
+    def toolbar = build(attrs, new ToolBar(decorations, SWT.NONE), closure)
+    def clientArea = decorations.clientArea
+    toolbar.setLocation(clientArea.x, clientArea.y)
+    return toolbar
+  }
+
+  def toolbarItem(Map attrs = [:], String name) {
+    toolbarItem attrs, name, null
+  }
+
+  def toolbarItem(Map attrs = [:], String name, Closure closure) {
+    log.info 'toolbarItem {}', name
+    attrs = [:] << attrs
+    def subMenu = attrs.subMenu
+    if(attrs.image instanceof String)
+      attrs.image = getResourceImage(attrs.image)
+    if(subMenu) {
+      attrs.remove('subMenu')
+      ToolItem item = build attrs, new ToolItem(currentWidget, SWT.DROP_DOWN), closure
+      item.text = name
+      item.menu = build new Menu(shell, SWT.DROP_DOWN), subMenu
+      return item
+    }
+    ToolItem item = build attrs, new ToolItem(currentWidget, SWT.PUSH), closure
+    item.text = name
+    return item
   }
 }
