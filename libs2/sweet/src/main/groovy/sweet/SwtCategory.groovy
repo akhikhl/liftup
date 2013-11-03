@@ -186,7 +186,7 @@ class SwtCategory {
       widget.data.listeners = [:]
     widget.data.listeners[listenerClosure] = listener
     addClosure(listener)
-    log.info 'addListener, listeners={}', widget.data.listeners
+    log.trace 'addListener, widget={}, listeners={}', widget, widget.data.listeners
     return listenerClosure
   }
 
@@ -195,7 +195,7 @@ class SwtCategory {
     if(listener) {
       removeClosure(listener)
       widget.data.listeners.remove(listenerClosure)
-      log.info 'removeListener, listeners={}', widget.data.listeners
+      log.trace 'removeListener, widget={}, listeners={}', widget, widget.data.listeners
     }
     return listenerClosure
   }
