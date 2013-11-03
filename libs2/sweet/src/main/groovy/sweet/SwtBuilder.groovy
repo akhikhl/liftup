@@ -118,12 +118,12 @@ class SwtBuilder {
   }
 
   def methodMissing(String name, args) {
-    log.info 'method missing: {}, delegating to swt component', name
+    log.trace 'method missing: {}, delegating to swt component', name
     widgetStack.last().invokeMethod(name, args)
   }
 
   def propertyMissing(String name, value) {
-    log.info 'property missing: {}, delegating to swt component', name
+    log.trace 'property missing: {}, delegating to swt component', name
     widgetStack.last()[name] = value
   }
 
