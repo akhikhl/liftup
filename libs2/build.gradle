@@ -16,7 +16,7 @@ ext {
   generateSources = true
   generateJavadoc = false
   sweet_version = '0.0.3'
-  groovy_version = '2.0.7'
+  groovy_version = '2.1.9'
 }
 
 allprojects {
