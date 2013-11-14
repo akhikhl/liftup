@@ -1,10 +1,9 @@
 apply plugin: 'groovy'
 
 dependencies {
-  compile "org.codehaus.groovy:groovy-all:$groovy_version"
-  compile gradleApi()
   compile 'commons-io:commons-io:2.4'
   compile 'commons-codec:commons-codec:1.8'
-  compile 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.3'
+  compile "org.codehaus.groovy:groovy-all:$groovy_version"
+  compile gradleApi()
 }
 

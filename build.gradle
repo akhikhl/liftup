@@ -1,0 +1,23 @@
+buildscript {
+  apply plugin: 'maven'
+  
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.3'
+    classpath 'org.akhikhl.sweet:sweet-plugin:0.0.4'
+  }
+}
+
+ext {
+  group = 'org.akhikhl.sweet'
+  version = '0.0.4'
+  generateSources = true
+  generateJavadoc = true
+}
+
+apply from: file('root.gradle')
+

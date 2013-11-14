@@ -1,0 +1,30 @@
+// please never call this script directly.
+// it is gradle-syntax configuration file, which is included by other scripts.
+// all values defined in this file are required, but can be redefined by a programmer.
+// this script can use variables current_os and current_arch to determine what to download.
+// current_os may have values 'win', 'linux'
+// current_arch may have values 'x86_32', 'x86_64'
+
+ext {
+  eclipseGroup = 'eclipse-kepler'
+
+  eclipseArchives = [
+    'linux_x86_32' : 'eclipse-jee-kepler-SR1-linux-gtk.tar.gz',
+    'linux_x86_64' : 'eclipse-jee-kepler-SR1-linux-gtk-x86_64.tar.gz',
+    'windows_x86_32' : 'eclipse-jee-kepler-SR1-win32.zip',
+    'windows_x86_64' : 'eclipse-jee-kepler-SR1-win32-x86_64.zip'
+  ]
+
+  eclipseMirror = 'http://mirror.netcologne.de'
+  
+  currentEclipseArchive = eclipseArchives[current_os + '_' + current_arch]
+  eclipseDownload_main = "$eclipseMirror/eclipse//technology/epp/downloads/release/kepler/SR1/$currentEclipseArchive"
+  eclipseDownload_deltaPack = "$eclipseMirror/eclipse//eclipse/downloads/drops4/R-4.3.1-201309111000/eclipse-4.3.1-delta-pack.zip"
+  eclipseDownload_languagePack = "$eclipseMirror/eclipse//technology/babel/babel_language_packs/R0.11.0/kepler/BabelLanguagePack-eclipse-de_4.3.0.v20130724043401.zip"
+
+  eclipseURLs = [
+    eclipseDownload_main,
+    eclipseDownload_deltaPack,
+    eclipseDownload_languagePack
+ ]
+}

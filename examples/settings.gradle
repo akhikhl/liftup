@@ -1,8 +1,0 @@
-include 'helloSwt'
-include 'swtAppLib:testlib'
-include 'swtAppLib:testapp'
-include 'helloEquinox:Plugin1'
-include 'helloEquinox:Plugin2'
-include 'helloEquinox:HelloEquinox'
-include 'helloRcp'
-include 'sweetDemo'

@@ -1,0 +1,237 @@
+buildscript {
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'commons-io:commons-io:2.4'
+    classpath 'de.northernideas:osgi2maven:1.0.2'
+  }
+}
+
+apply from: 'platformConfig.gradle'
+apply from: 'eclipseDownloadConfig.gradle'
+
+import osgi2maven.bundleImport.*
+import osgi2maven.mavenExport.*
+import sweethelpers.*
+
+class EclipseDeployer {
+
+  def eclipseGroup;
+  def artifacts = [:]
+  def artifactsNl = [:]
+  def artifactFiles = [:]
+  int dotLineLen = 0
+  
+  def printDot() {
+    print "."
+    if(++dotLineLen == 80) {
+      println ""
+      dotLineLen = 0;
+    }
+    else
+      System.out.flush()
+  }
+
+  def parseArtifactsInFolder(artifactsSourceDir) {
+    def processFile = { file ->
+      printDot()
+      BundleReader reader = new BundleReader(group: eclipseGroup, dependencyGroup: eclipseGroup)
+      Pom pom = reader.readDependencies(file)
+      def match = pom.artifact =~ /(.*)\.nl_(.*)/
+      if(match) {      
+        def artifact = match[0][1]
+        def language = match[0][2]
+        if(!artifactsNl[language])
+          artifactsNl[language] = [:]
+        artifactsNl[language][artifact] = pom
+      } else {
+        if(!artifacts.containsKey(pom.artifact))
+          artifacts[pom.artifact] = []
+        artifacts[pom.artifact].add pom
+      }
+      artifactFiles["${pom.artifact}:${pom.version}"] = file
+    }
+    println "Reading bundles in $artifactsSourceDir"
+    dotLineLen = 0
+    artifactsSourceDir.eachDir processFile
+    artifactsSourceDir.eachFileMatch ~/.*\.jar/, processFile
+    println ''
+  }
+
+  class Version {
+    long major = 0, minor = 0, release = 0
+    String suffix = ''
+    Version(Pom pom) {
+      this(pom.version)
+    }
+    Version(String versionStr) {
+      def m = versionStr =~ /(\d+)(\.(\d+))?(\.(\d+))?(\.(.+))?/
+      if(m) {
+        major = Long.valueOf(m[0][1] ?: '0')
+        minor = Long.valueOf(m[0][3] ?: '0')
+        release = Long.valueOf(m[0][5] ?: '0')
+        suffix = m[0][7] ?: ''
+      }
+    }
+    int compare(Version other) {
+      int result = major - other.major
+      if(result != 0) 
+        return result
+      result = minor - other.minor
+      if(result != 0) 
+        return result
+      result = release - other.release
+      if(result != 0) 
+        return result
+      return suffix.compareTo(other.suffix)        
+    } 
+  }
+
+  def fixDependencies() {
+    println 'Fixing dependencies'
+    dotLineLen = 0
+    artifacts.each { name, artifactVersions ->
+      artifactVersions.each { pom ->
+        pom.bundles.removeAll { reqBundle -> 
+          if(!artifacts[reqBundle.name.trim()]) {
+            System.err.println("Warning: artifact dependency $pom.group:$pom.artifact:$pom.version -> $reqBundle.name could not be resolved.")
+            return true
+          }
+          return false
+        }
+        pom.bundles.each { reqBundle ->
+          def resolvedVersions = artifacts[reqBundle.name.trim()] 
+          if(resolvedVersions.size() == 1)
+            reqBundle.version = resolvedVersions[0].version
+          else if(!resolvedVersions.find { it -> it.version == reqBundle.version.trim() }) {
+            def compare = { a, b -> new Version(a).compare(new Version(b)) }
+            resolvedVersions = resolvedVersions.sort(compare)
+            int i = Collections.binarySearch resolvedVersions, reqBundle.version.trim(), compare as java.util.Comparator
+            if(i < 0)
+              i = -i - 1
+            if(i > resolvedVersions.size() - 1)
+              i = resolvedVersions.size() - 1
+            def c = resolvedVersions[i]
+            def depsStr = resolvedVersions.collect({ p -> "$p.group:$p.artifact:$p.version" }).join(', ') 
+            System.err.println "Warning: resolved ambiguous dependency: $pom.group:$pom.artifact:$pom.version -> $reqBundle.name:$reqBundle.version, chosen $c.group:$c.artifact:$c.version from [$depsStr]."
+            reqBundle.version = c.version
+          }
+        }
+        artifactsNl.each { language, map_nl ->
+          printDot()
+          def pom_nl = map_nl[pom.artifact]
+          if(pom_nl)
+            pom.bundles.each { dep_bundle ->
+              def dep_pom_nl = map_nl[dep_bundle.name]
+              if(dep_pom_nl) {
+                pom_nl.bundles.add new RequiredBundle(name: dep_pom_nl.artifact, version: dep_pom_nl.version, visibility: dep_bundle.visibility, resolution: dep_bundle.resolution)
+              }
+            }
+        }
+      }
+    }
+    println ''
+  }
+
+  def deployArtifacts(mavenDeployer) {
+    println 'Deploying artifacts'
+    artifacts.each { name, artifactVersions ->
+      artifactVersions.each { pom ->
+        mavenDeployer.publishOsgiArtifact pom, artifactFiles["${pom.artifact}:${pom.version}"]
+      }
+    }
+    artifactsNl.each { language, map_nl ->
+      map_nl.each { artifactName, pom ->
+        mavenDeployer.publishOsgiArtifact pom, artifactFiles["${pom.artifact}:${pom.version}"]
+      }
+    }
+  }
+}
+
+def console = new SysConsole()
+
+String getArchiveNameNoExt(String fileName) {
+  for(ext in [ '.tar.gz', '.gz', '.tar', '.zip' ]) {
+    if(fileName.endsWith(ext))
+      return fileName.substring(0, fileName.length() - ext.length());
+  }
+  return fileName  
+}
+
+task('build') {
+  File markerFile = new File(buildDir, 'eclipseDownloaded')
+  inputs.file '../eclipseDownloadConfig.gradle'
+  outputs.file markerFile
+  doLast {
+    buildDir.mkdirs()
+    def downloader = new Downloader(console)
+    def archiveUnpacker = new ArchiveUnpacker(console)
+    for(url in eclipseURLs) {
+      String fileName = url.substring(url.lastIndexOf('/') + 1)
+      String fileNameNoExt = getArchiveNameNoExt(fileName)
+      File unpackDir = new File(buildDir, fileNameNoExt)
+      if(!unpackDir.exists()) {
+        File archiveFile = new File(buildDir, fileName)
+        downloader.downloadFile(new URL(url), archiveFile)
+        archiveUnpacker.unpack(archiveFile, buildDir)
+        new File(buildDir, 'eclipse').renameTo(unpackDir)
+      }
+    }
+    markerFile.text = new java.util.Date()
+  }
+}
+
+task('install') {
+  dependsOn project.tasks.build
+  File outputMarkerFile = new File(buildDir, 'eclipseArtifactsInstalled')
+  outputs.file outputMarkerFile
+  doLast {
+    def eclipseDeployer = new EclipseDeployer(eclipseGroup: eclipseGroup)
+    for(url in eclipseURLs) {
+      String fileName = url.substring(url.lastIndexOf('/') + 1)
+      String fileNameNoExt = getArchiveNameNoExt(fileName)
+      File unpackDir = new File(buildDir, fileNameNoExt)
+      eclipseDeployer.parseArtifactsInFolder(new File(unpackDir, 'plugins'))
+    }
+    eclipseDeployer.fixDependencies()
+    def localMavenRepository = "file://" + new File(System.getProperty('user.home'), ".m2/repository").absolutePath
+    MavenDeployer mavenDeployer = new MavenDeployer(localMavenRepository, '', '')
+    File mavenAntTasksJar = buildscript.configurations.classpath.find { it.name.contains('maven-ant-tasks') }
+    mavenDeployer.ant.taskdef(resource: 'org/apache/maven/artifact/ant/antlib.xml', classpath: mavenAntTasksJar.absolutePath)
+    eclipseDeployer.deployArtifacts(mavenDeployer)
+    outputMarkerFile.text = new java.util.Date()
+  }
+}
+
+task('uploadArchives') {
+  dependsOn project.tasks.build
+  doLast {
+    def eclipseDeployer = new EclipseDeployer(eclipseGroup: eclipseGroup)
+    for(url in eclipseURLs) {
+      String fileName = url.substring(url.lastIndexOf('/') + 1)
+      String fileNameNoExt = getArchiveNameNoExt(fileName)
+      File unpackDir = new File(buildDir, fileNameNoExt)
+      eclipseDeployer.parseArtifactsInFolder(new File(unpackDir, 'plugins'))
+    }
+    eclipseDeployer.fixDependencies()
+    def corporateDeployment = rootProject.ext.corporateDeployment
+    MavenDeployer mavenDeployer = new MavenDeployer(corporateDeployment.url, corporateDeployment.user, corporateDeployment.password)
+    File mavenAntTasksJar = buildscript.configurations.classpath.find { it.name.contains('maven-ant-tasks') }
+    mavenDeployer.ant.taskdef(resource: 'org/apache/maven/artifact/ant/antlib.xml', classpath: mavenAntTasksJar.absolutePath)
+    eclipseDeployer.deployArtifacts(mavenDeployer)
+  }
+}
+
+if(!project.tasks.findByName('clean'))
+task clean {
+  doLast {
+    if(buildDir.exists())
+      FileUtils.deleteDirectory(buildDir);
+  }
+}
+
+defaultTasks 'install'
