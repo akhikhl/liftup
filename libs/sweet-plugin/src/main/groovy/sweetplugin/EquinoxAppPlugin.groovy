@@ -23,7 +23,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
       }
     }
     if(result)
-    result = "${project.name}.$result"
+      result = "${project.name}.$result"
     return result
   }
 
@@ -37,7 +37,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
       }
     }
     if(result)
-    result = "${project.name}.$result"
+      result = "${project.name}.$result"
     return result
   }
 
@@ -66,7 +66,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
       project.equinox.beforeProductGeneration.each { obj ->
         if(obj instanceof Closure)
-        obj()
+          obj()
       }
 
       def wrappedLibsDir = new File("${project.buildDir}/wrappedLibs")
@@ -79,21 +79,21 @@ class EquinoxAppPlugin implements Plugin<Project> {
           inputs.files.each { lib ->
             def libManifest = ManifestUtils.getManifest(project, lib)
             if(ManifestUtils.isBundle(libManifest))
-            return
+              return
             String baseLibName = FilenameUtils.getBaseName(lib.name)
             def bundleName
             def bundleVersion = ManifestUtils.getManifestEntry(libManifest, 'Implementation-Version')
             if(bundleVersion) {
               def match = baseLibName =~ '(.+)-' + bundleVersion.replaceAll(/\./, /\\./)
               if(match)
-              bundleName = match[0][1]
+                bundleName = match[0][1]
             }
             if(!bundleName) {
               bundleVersion = ManifestUtils.getManifestEntry(libManifest, 'Specification-Version')
               if(bundleVersion) {
                 def match = baseLibName =~ '(.+)-' + bundleVersion.replaceAll(/\./, /\\./)
                 if(match)
-                bundleName = match[0][1]
+                  bundleName = match[0][1]
               }
             }
             if(!bundleName) {
@@ -107,7 +107,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               // check for too long version numbers, replace to valid bundle version if needed
               def match = bundleVersion =~ /(\d+\.)(\d+\.)(\d+\.)(([\w-]+\.)+[\w-]+)/
               if(match)
-              bundleVersion = match[0][1] + match[0][2] + match[0][3] + match[0][4].replaceAll(/\./, '-')
+                bundleVersion = match[0][1] + match[0][2] + match[0][3] + match[0][4].replaceAll(/\./, '-')
             }
             String fragmentHost
             if(bundleVersion) {
@@ -115,10 +115,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(match) {
                 def suffix = match[0][2]
                 if(suffix.startsWith('-'))
-                suffix = suffix.substring(1)
+                  suffix = suffix.substring(1)
                 if(suffix) {
                   if(suffix != 'patch')
-                  fragmentHost = bundleName
+                    fragmentHost = bundleName
                   bundleName += '-' + suffix
                 }
                 bundleVersion = match[0][1]
@@ -137,21 +137,21 @@ class EquinoxAppPlugin implements Plugin<Project> {
               instruction 'Bundle-Classpath', lib.name
               instruction 'Wrapped-Library', lib.name
               if(fragmentHost)
-              instruction 'Fragment-Host', fragmentHost
+                instruction 'Fragment-Host', fragmentHost
             }
             m = m.effectiveManifest
             def packages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
             // workarounds for dynamically referenced classes
             if(bundleName.startsWith('ant-optional'))
-            packages.remove 'COM.ibm.netrexx.process'
+              packages.remove 'COM.ibm.netrexx.process'
             else if(bundleName.startsWith('commons-logging'))
-            packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.logger') }
+              packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.logger') }
             else if(bundleName.startsWith('avalon-framework'))
-            packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.parameters') }
+              packages = packages.findAll { !it.key.startsWith('org.apache.log') && !it.key.startsWith('org.apache.avalon.framework.parameters') }
             else if(bundleName == 'batik-js')
-            packages.remove 'org.apache.xmlbeans'
+              packages.remove 'org.apache.xmlbeans'
             else if(bundleName == 'batik-script')
-            packages.remove 'org.mozilla.javascript'
+              packages.remove 'org.mozilla.javascript'
             else if(bundleName == 'fop') {
               packages.remove 'javax.media.jai'
               packages = packages.findAll { !it.key.startsWith('org.apache.tools.ant') }
@@ -185,25 +185,25 @@ class EquinoxAppPlugin implements Plugin<Project> {
               packages.remove 'oracle.security.pki'
             }
             else if(bundleName.startsWith('saxon'))
-            packages.remove 'com.saxonica.validate'
+              packages.remove 'com.saxonica.validate'
             else if(bundleName.startsWith('svnkit')) {
               packages = packages.findAll { !it.key.startsWith('org.tmatesoft.sqljet') }
               packages.remove 'org.tigris.subversion.javahl'
             }
             else if(bundleName == 'xalan')
-            packages.remove 'sun.io'
+              packages.remove 'sun.io'
             else if(bundleName == 'xmlgraphics-commons')
-            packages = packages.findAll { !it.key.startsWith('com.sun.image.codec') }
+              packages = packages.findAll { !it.key.startsWith('com.sun.image.codec') }
             else if(bundleName == 'jaxen') {
               packages.remove 'nu.xom'
               packages = packages.findAll { !it.key.startsWith('org.jdom') && !it.key.startsWith('org.dom4j') }
             } else if(bundleName == 'xercesImpl')
-            packages.remove 'sun.io'
+              packages.remove 'sun.io'
             else if(bundleName == 'commons-jxpath')
-            packages.remove 'ant-optional'
+              packages.remove 'ant-optional'
             m.attributes.remove 'Import-Package'
             if(packages)
-            m.attributes(['Import-Package': ManifestUtils.packagesToString(packages)])
+              m.attributes(['Import-Package': ManifestUtils.packagesToString(packages)])
 
             m.attributes.remove 'Class-Path'
 
@@ -229,20 +229,24 @@ class EquinoxAppPlugin implements Plugin<Project> {
         inputs.files project.configurations.runtime.files
         outputs.files runConfigFile
         doLast {
+          // need to delete config-subdirs, otherwise osgi uses cached bundles,
+          // not the bundles updated by prepareRunConfig task
+          new File(runConfigDir).eachDir { it.deleteDir() }
+
           // key is plugin name, value is complete launch entry for configuration
           def bundleLaunchList = [:]
 
           def addBundle = { File file ->
             String pluginName = getPluginName(file.name)
             if(bundleLaunchList.containsKey(pluginName))
-            return
+              return
             String launchOption = ''
             if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.common')
-            launchOption = '@2:start'
+              launchOption = '@2:start'
             else if(pluginName == 'org.eclipse.core.runtime' || pluginName == 'jersey-core')
-            launchOption = '@start'
+              launchOption = '@start'
             if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
-            bundleLaunchList[pluginName] = "reference\\:file\\:${file.absolutePath}${launchOption}"
+              bundleLaunchList[pluginName] = "reference\\:file\\:${file.absolutePath}${launchOption}"
           }
 
           addBundle project.tasks.jar.archivePath
@@ -251,7 +255,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
           project.configurations.runtime.each {
             if(ManifestUtils.isBundle(project, it))
-            addBundle it
+              addBundle it
           }
 
           if(project.run.language) {
@@ -261,7 +265,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
                 if(m) {
                   String pluginName = m[0][1]
                   if(project.configurations.runtime.files.find { getPluginName(it.name) == pluginName })
-                  addBundle file
+                    addBundle file
                 }
               }
             }
@@ -273,14 +277,14 @@ class EquinoxAppPlugin implements Plugin<Project> {
           runConfigFile.withPrintWriter { PrintWriter configWriter ->
             String applicationId = getEclipseApplicationId(project)
             if(applicationId)
-            configWriter.println "eclipse.application=$applicationId"
+              configWriter.println "eclipse.application=$applicationId"
             String productId = getEclipseProductId(project)
             if(productId)
-            configWriter.println "eclipse.product=$productId"
+              configWriter.println "eclipse.product=$productId"
             project.sourceSets.main.resources.srcDirs.each { File srcDir ->
               File splashFile = new File(srcDir, 'splash.bmp')
               if(splashFile.exists())
-              configWriter.println "osgi.splashLocation=${splashFile.absolutePath}"
+                configWriter.println "osgi.splashLocation=${splashFile.absolutePath}"
             }
             configWriter.println "osgi.framework=file\\:${frameworkFile.absolutePath}"
             configWriter.println 'osgi.bundles.defaultStartLevel=4'
@@ -311,7 +315,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
       project.sourceSets.main.resources.srcDirs.each { File srcDir ->
         File splashFile = new File(srcDir, 'splash.bmp')
         if(splashFile.exists())
-        programArgs.add '-showSplash'
+          programArgs.add '-showSplash'
       }
 
       programArgs.addAll project.run.args
@@ -341,40 +345,40 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
         String suffix = ''
         if(product.name != 'default')
-        suffix = product.suffix ?: product.name
+          suffix = product.suffix ?: product.name
 
         def launchers
         if(product.launchers)
-        launchers = product.launchers
+          launchers = product.launchers
         else if(product.launcher)
-        launchers = [product.launcher]
+          launchers = [product.launcher]
         else if(product.platform == 'windows')
-        launchers = ['windows']
+          launchers = ['windows']
         else
-        launchers = ['shell']
+          launchers = ['shell']
 
         def jreFolder = null
         if(product.jre) {
           def file = new File(product.jre)
           if(!file.isAbsolute())
-          file = new File(project.projectDir, file.path)
+            file = new File(project.projectDir, file.path)
           if(file.exists()) {
             if(file.isDirectory())
-            jreFolder = file
+              jreFolder = file
             else
-            project.logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
+              project.logger.warn 'the specified JRE path {} represents a file (it should be a folder)', file.absolutePath
           }
           else
-          project.logger.warn 'JRE folder {} does not exist', file.absolutePath
+            project.logger.warn 'JRE folder {} does not exist', file.absolutePath
         }
 
         String productOutputDir = "${outputBaseDir}/${project.name}-${project.version}"
         if(suffix)
-        productOutputDir += '-' + suffix
+          productOutputDir += '-' + suffix
 
         String buildTaskName = 'buildProduct'
         if(product.name != 'default')
-        buildTaskName += '_' + product.name
+          buildTaskName += '_' + product.name
 
         project.task(buildTaskName) { task ->
 
@@ -385,10 +389,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
           inputs.files project.configurations.runtime.files
 
           if(productConfig)
-          inputs.files productConfig.files
+            inputs.files productConfig.files
 
           if(jreFolder)
-          inputs.dir jreFolder
+            inputs.dir jreFolder
 
           outputs.dir productOutputDir
 
@@ -399,20 +403,20 @@ class EquinoxAppPlugin implements Plugin<Project> {
             def addBundle = { File file ->
               String pluginName = getPluginName(file.name)
               if(bundleLaunchList.containsKey(pluginName))
-              return
+                return
               String launchOption = ''
               if(pluginName == 'org.eclipse.equinox.ds' || pluginName == 'org.eclipse.equinox.common')
-              launchOption = '@2:start'
+                launchOption = '@2:start'
               else if(pluginName == 'org.eclipse.core.runtime' || pluginName == 'jersey-core')
-              launchOption = '@start'
+                launchOption = '@start'
               if(pluginName != osgiFrameworkPluginName && !pluginName.startsWith(equinoxLauncherPluginName))
-              bundleLaunchList[pluginName] = "reference\\:file\\:${file.name}${launchOption}"
+                bundleLaunchList[pluginName] = "reference\\:file\\:${file.name}${launchOption}"
               project.copy {
                 from file
                 into "$productOutputDir/plugins"
                 // need to rename them to ensure that platform-specific launcher fragments are automatically found
                 if(file.name.startsWith(equinoxLauncherPluginName))
-                rename eclipsePluginMask, '$1_$2'
+                  rename eclipsePluginMask, '$1_$2'
               }
             }
 
@@ -422,12 +426,12 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
             project.configurations.runtime.each {
               if(ManifestUtils.isBundle(project, it) && !findFileInProducts(it))
-              addBundle it
+                addBundle it
             }
 
             productConfig?.each {
               if(ManifestUtils.isBundle(project, it))
-              addBundle it
+                addBundle it
             }
 
             bundleLaunchList = bundleLaunchList.sort()
@@ -437,33 +441,33 @@ class EquinoxAppPlugin implements Plugin<Project> {
             configFile.withPrintWriter { PrintWriter configWriter ->
               String applicationId = getEclipseApplicationId(project)
               if(applicationId)
-              configWriter.println "eclipse.application=$applicationId"
+                configWriter.println "eclipse.application=$applicationId"
               String productId = getEclipseProductId(project)
               if(productId)
-              configWriter.println "eclipse.product=$productId"
+                configWriter.println "eclipse.product=$productId"
               configWriter.println "osgi.framework=file\\:plugins/${frameworkFile.name}"
               configWriter.println 'osgi.bundles.defaultStartLevel=4'
               configWriter.println 'osgi.bundles=' + bundleLaunchList.values().join(',\\\n  ')
               project.sourceSets.main.resources.srcDirs.each { File srcDir ->
                 if(new File(srcDir, 'splash.bmp').exists())
-                configWriter.println "osgi.splashPath=file\\:plugins/${project.tasks.jar.archivePath.name}"
+                  configWriter.println "osgi.splashPath=file\\:plugins/${project.tasks.jar.archivePath.name}"
               }
             }
 
             String equinoxLauncherName = 'plugins/' + equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')
 
             if(jreFolder)
-            project.copy {
-              from jreFolder
-              into "$productOutputDir/jre"
-            }
+              project.copy {
+                from jreFolder
+                into "$productOutputDir/jre"
+              }
 
             def launchParameters = project.equinox.launchParameters.clone()
 
             project.sourceSets.main.resources.srcDirs.each { File srcDir ->
               File splashFile = new File(srcDir, 'splash.bmp')
               if(splashFile.exists())
-              launchParameters.add '-showSplash'
+                launchParameters.add '-showSplash'
             }
 
             if(language) {
@@ -473,7 +477,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
             launchParameters = launchParameters.join(' ')
             if(launchParameters)
-            launchParameters = ' ' + launchParameters
+              launchParameters = ' ' + launchParameters
 
             if(launchers.contains('shell')) {
               def javaLocation = ''
@@ -495,14 +499,14 @@ ${DIR}/jre/bin/'''
             if(launchers.contains('windows')) {
               def javaLocation = ''
               if(jreFolder)
-              javaLocation = '%~dp0/jre/bin/'
+                javaLocation = '%~dp0/jre/bin/'
               File launchScriptFile = new File("${productOutputDir}/${project.name}.bat")
               launchScriptFile.text = "@${javaLocation}java -jar ${equinoxLauncherName}$launchParameters %*"
             }
 
             String versionFileName = "${productOutputDir}/VERSION"
             if(platform == 'windows' || launchers.contains('windows'))
-            versionFileName += '.txt'
+              versionFileName += '.txt'
             new File(versionFileName).text = """\
 product: ${project.name}
 version: ${project.version}
@@ -516,7 +520,7 @@ language: $language
         if(project.equinox.archiveProducts) {
           def archiveTaskName = 'archiveProduct'
           if(product.name != 'default')
-          archiveTaskName += '_' + product.name
+            archiveTaskName += '_' + product.name
 
           def archiveType = launchers.contains('windows') ? Zip : Tar
 
@@ -528,34 +532,34 @@ language: $language
             def addFileToArchive = { f, Closure closure ->
               File file = f instanceof File ? f : new File(f)
               if(!file.isAbsolute())
-              file = new File(project.projectDir, file.path)
+                file = new File(project.projectDir, file.path)
               if(!addedFiles.contains(file.absolutePath)) {
                 addedFiles.add(file.absolutePath)
                 if(file.exists())
-                from file, closure
+                  from file, closure
                 else
-                project.logger.info 'additional file/folder {} does not exist', file.absolutePath
+                  project.logger.info 'additional file/folder {} does not exist', file.absolutePath
               }
             }
             if(project.equinox.additionalFilesToArchive)
-            for(def f in project.equinox.additionalFilesToArchive)
-            addFileToArchive f, { into project.name }
+              for(def f in project.equinox.additionalFilesToArchive)
+                addFileToArchive f, { into project.name }
             if(product.archiveFiles)
-            for(def f in product.archiveFiles)
-            addFileToArchive f, { into project.name }
+              for(def f in product.archiveFiles)
+                addFileToArchive f, { into project.name }
             addFileToArchive 'CHANGES', { into project.name }
             addFileToArchive 'README', { into project.name }
             addFileToArchive 'LICENSE', { into project.name }
             if(platform == 'windows')
-            addFileToArchive 'appicon.ico', {
-              into project.name
-              rename 'appicon.ico', "${project.name}.ico"
-            }
+              addFileToArchive 'appicon.ico', {
+                into project.name
+                rename 'appicon.ico', "${project.name}.ico"
+              }
             else
-            addFileToArchive 'appicon.xpm', {
-              into project.name
-              rename 'appicon.xpm', "${project.name}.xpm"
-            }
+              addFileToArchive 'appicon.xpm', {
+                into project.name
+                rename 'appicon.xpm', "${project.name}.xpm"
+              }
             destinationDir = new File(outputBaseDir)
             classifier = suffix
             if(archiveType == Tar) {
