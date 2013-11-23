@@ -231,7 +231,10 @@ class EquinoxAppPlugin implements Plugin<Project> {
         doLast {
           // need to delete config-subdirs, otherwise osgi uses cached bundles,
           // not the bundles updated by prepareRunConfig task
-          new File(runConfigDir).eachDir { it.deleteDir() }
+          new File(runConfigDir).with {
+            if(it.exists())
+              it.eachDir { f -> f.deleteDir() }
+          }
 
           // key is plugin name, value is complete launch entry for configuration
           def bundleLaunchList = [:]
