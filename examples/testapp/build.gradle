@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'swt-app'
 
 dependencies {
-  compile project(':swtAppLib:testlib')
+  compile project(':examples:testlib')
 }
 
 jar {

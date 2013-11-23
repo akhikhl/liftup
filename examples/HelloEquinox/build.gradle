@@ -2,5 +2,5 @@ apply plugin: 'java'
 apply plugin: 'eclipse-equinox-app'
 
 dependencies {
-  compile project(':helloEquinox:Plugin2')
+  compile project(':examples:Plugin2')
 }
