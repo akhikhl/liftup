@@ -7,7 +7,7 @@ buildscript {
 
   dependencies {
     classpath 'commons-io:commons-io:2.4'
-    classpath 'de.northernideas:osgi2maven:1.0.2'
+    classpath 'de.northernideas:osgi2maven:1.0.3'
   }
 }
 
@@ -21,9 +21,10 @@ import sweethelpers.*
 class EclipseDeployer {
 
   def eclipseGroup;
-  def artifacts = [:]
-  def artifactsNl = [:]
-  def artifactFiles = [:]
+  Map artifacts = [:]
+  Map artifactsNl = [:]
+  Map artifactFiles = [:]
+  Map sourceFiles = [:]
   int dotLineLen = 0
   
   def printDot() {
@@ -36,24 +37,30 @@ class EclipseDeployer {
       System.out.flush()
   }
 
-  def parseArtifactsInFolder(artifactsSourceDir) {
+  def collectArtifactsInFolder(artifactsSourceDir) {
     def processFile = { file ->
       printDot()
       BundleReader reader = new BundleReader(group: eclipseGroup, dependencyGroup: eclipseGroup)
       Pom pom = reader.readDependencies(file)
-      def match = pom.artifact =~ /(.*)\.nl_(.*)/
-      if(match) {      
-        def artifact = match[0][1]
-        def language = match[0][2]
-        if(!artifactsNl[language])
-          artifactsNl[language] = [:]
-        artifactsNl[language][artifact] = pom
+      def source_match = pom.artifact =~ /(.*)\.source/
+      if(source_match) {
+        def artifact = source_match[0][1]
+        sourceFiles["${artifact}:${pom.version}"] = file
       } else {
-        if(!artifacts.containsKey(pom.artifact))
-          artifacts[pom.artifact] = []
-        artifacts[pom.artifact].add pom
+        def nl_match = pom.artifact =~ /(.*)\.nl_(.*)/
+        if(nl_match) {      
+          def artifact = nl_match[0][1]
+          def language = nl_match[0][2]
+          if(!artifactsNl[language])
+            artifactsNl[language] = [:]
+          artifactsNl[language][artifact] = pom
+        } else {
+          if(!artifacts.containsKey(pom.artifact))
+            artifacts[pom.artifact] = []
+          artifacts[pom.artifact].add pom
+        }
+        artifactFiles["${pom.artifact}:${pom.version}"] = file
       }
-      artifactFiles["${pom.artifact}:${pom.version}"] = file
     }
     println "Reading bundles in $artifactsSourceDir"
     dotLineLen = 0
@@ -141,7 +148,7 @@ class EclipseDeployer {
     println 'Deploying artifacts'
     artifacts.each { name, artifactVersions ->
       artifactVersions.each { pom ->
-        mavenDeployer.publishOsgiArtifact pom, artifactFiles["${pom.artifact}:${pom.version}"]
+        mavenDeployer.publishOsgiArtifact pom, artifactFiles["${pom.artifact}:${pom.version}"], sourceFile: sourceFiles["${pom.artifact}:${pom.version}"]
       }
     }
     artifactsNl.each { language, map_nl ->
@@ -195,11 +202,11 @@ task('install') {
       String fileName = url.substring(url.lastIndexOf('/') + 1)
       String fileNameNoExt = getArchiveNameNoExt(fileName)
       File unpackDir = new File(buildDir, fileNameNoExt)
-      eclipseDeployer.parseArtifactsInFolder(new File(unpackDir, 'plugins'))
+      eclipseDeployer.collectArtifactsInFolder(new File(unpackDir, 'plugins'))
     }
     eclipseDeployer.fixDependencies()
     def localMavenRepository = "file://" + new File(System.getProperty('user.home'), ".m2/repository").absolutePath
-    MavenDeployer mavenDeployer = new MavenDeployer(localMavenRepository, '', '')
+    MavenDeployer mavenDeployer = new MavenDeployer(localMavenRepository)
     File mavenAntTasksJar = buildscript.configurations.classpath.find { it.name.contains('maven-ant-tasks') }
     mavenDeployer.ant.taskdef(resource: 'org/apache/maven/artifact/ant/antlib.xml', classpath: mavenAntTasksJar.absolutePath)
     eclipseDeployer.deployArtifacts(mavenDeployer)
@@ -215,13 +222,11 @@ task('uploadArchives') {
       String fileName = url.substring(url.lastIndexOf('/') + 1)
       String fileNameNoExt = getArchiveNameNoExt(fileName)
       File unpackDir = new File(buildDir, fileNameNoExt)
-      eclipseDeployer.parseArtifactsInFolder(new File(unpackDir, 'plugins'))
+      eclipseDeployer.collectArtifactsInFolder(new File(unpackDir, 'plugins'))
     }
     eclipseDeployer.fixDependencies()
     def corporateDeployment = rootProject.ext.corporateDeployment
-    MavenDeployer mavenDeployer = new MavenDeployer(corporateDeployment.url, corporateDeployment.user, corporateDeployment.password)
-    File mavenAntTasksJar = buildscript.configurations.classpath.find { it.name.contains('maven-ant-tasks') }
-    mavenDeployer.ant.taskdef(resource: 'org/apache/maven/artifact/ant/antlib.xml', classpath: mavenAntTasksJar.absolutePath)
+    MavenDeployer mavenDeployer = new MavenDeployer(corporateDeployment.url, user: corporateDeployment.user, password: corporateDeployment.password)
     eclipseDeployer.deployArtifacts(mavenDeployer)
   }
 }
