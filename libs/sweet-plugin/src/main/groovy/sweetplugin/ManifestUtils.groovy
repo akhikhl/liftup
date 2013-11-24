@@ -29,15 +29,32 @@ class ManifestUtils {
         
         m = m.effectiveManifest
         
-        project.sourceSets.main.java.srcDirs.each { File srcDir ->
-          project.fileTree(srcDir).include('**/Activator.java').files.each { File activatorSourceFile ->
+        project.sourceSets.main.allSource.srcDirs.each { File srcDir ->
+          boolean foundActivator = false
+          project.logger.info '{}: Checking for groovy activator', project.name
+          project.fileTree(srcDir).include('**/Activator.groovy').files.each { File activatorSourceFile ->
             String activator = activatorSourceFile.absolutePath.substring(srcDir.absolutePath.length())
             if(activator.startsWith('/'))
               activator = activator.substring(1)
-            activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
+            activator = activator.substring(0, activator.length() - 7) // remove '.groovy' file extension
             activator = activator.replaceAll('/', '.')
             m.attributes 'Bundle-Activator': activator
             m.attributes 'Bundle-ActivationPolicy': 'lazy'
+            project.logger.info '{}: Found groovy activator: {}', project.name, activator
+            foundActivator = true
+          }
+          if(!foundActivator) {
+            project.logger.info '{}: Checking for java activator', project.name
+            project.fileTree(srcDir).include('**/Activator.java').files.each { File activatorSourceFile ->
+              String activator = activatorSourceFile.absolutePath.substring(srcDir.absolutePath.length())
+              if(activator.startsWith('/'))
+                activator = activator.substring(1)
+              activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
+              activator = activator.replaceAll('/', '.')
+              m.attributes 'Bundle-Activator': activator
+              m.attributes 'Bundle-ActivationPolicy': 'lazy'
+              project.logger.info '{}: Found java activator: {}', project.name, activator
+            }
           }
         }
 
