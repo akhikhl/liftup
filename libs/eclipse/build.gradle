@@ -37,7 +37,7 @@ class EclipseDeployer {
       System.out.flush()
   }
 
-  def collectArtifactsInFolder(artifactsSourceDir) {
+  def collectArtifactsInFolder(Map options = [:], artifactsSourceDir) {
     def processFile = { file ->
       printDot()
       BundleReader reader = new BundleReader(group: eclipseGroup, dependencyGroup: eclipseGroup)
@@ -46,7 +46,7 @@ class EclipseDeployer {
       if(source_match) {
         def artifact = source_match[0][1]
         sourceFiles["${artifact}:${pom.version}"] = file
-      } else {
+      } else if(!options.sourcesOnly) {
         def nl_match = pom.artifact =~ /(.*)\.nl_(.*)/
         if(nl_match) {      
           def artifact = nl_match[0][1]
@@ -54,7 +54,7 @@ class EclipseDeployer {
           if(!artifactsNl[language])
             artifactsNl[language] = [:]
           artifactsNl[language][artifact] = pom
-        } else {
+        } else if(!options.languagePacksOnly) {
           if(!artifacts.containsKey(pom.artifact))
             artifacts[pom.artifact] = []
           artifacts[pom.artifact].add pom
@@ -177,7 +177,8 @@ task('build') {
     buildDir.mkdirs()
     def downloader = new Downloader(console)
     def archiveUnpacker = new ArchiveUnpacker(console)
-    for(url in eclipseURLs) {
+    for(Map source in eclipseSources) {
+      def url = source.url
       String fileName = url.substring(url.lastIndexOf('/') + 1)
       String fileNameNoExt = getArchiveNameNoExt(fileName)
       File unpackDir = new File(buildDir, fileNameNoExt)
@@ -198,11 +199,12 @@ task('install') {
   outputs.file outputMarkerFile
   doLast {
     def eclipseDeployer = new EclipseDeployer(eclipseGroup: eclipseGroup)
-    for(url in eclipseURLs) {
+    for(Map source in eclipseSources) {
+      def url = source.url
       String fileName = url.substring(url.lastIndexOf('/') + 1)
       String fileNameNoExt = getArchiveNameNoExt(fileName)
       File unpackDir = new File(buildDir, fileNameNoExt)
-      eclipseDeployer.collectArtifactsInFolder(new File(unpackDir, 'plugins'))
+      eclipseDeployer.collectArtifactsInFolder(source, new File(unpackDir, 'plugins'))
     }
     eclipseDeployer.fixDependencies()
     def localMavenRepository = "file://" + new File(System.getProperty('user.home'), ".m2/repository").absolutePath
@@ -218,11 +220,12 @@ task('uploadArchives') {
   dependsOn project.tasks.build
   doLast {
     def eclipseDeployer = new EclipseDeployer(eclipseGroup: eclipseGroup)
-    for(url in eclipseURLs) {
+    for(Map source in eclipseSources) {
+      def url = source.url
       String fileName = url.substring(url.lastIndexOf('/') + 1)
       String fileNameNoExt = getArchiveNameNoExt(fileName)
       File unpackDir = new File(buildDir, fileNameNoExt)
-      eclipseDeployer.collectArtifactsInFolder(new File(unpackDir, 'plugins'))
+      eclipseDeployer.collectArtifactsInFolder(source, new File(unpackDir, 'plugins'))
     }
     eclipseDeployer.fixDependencies()
     def corporateDeployment = rootProject.ext.corporateDeployment

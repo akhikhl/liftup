@@ -32,10 +32,10 @@ ext {
   eclipseDownload_deltaPack = "$eclipseMirror/eclipse//eclipse/downloads/drops4/R-4.3.1-201309111000/eclipse-4.3.1-delta-pack.zip"
   eclipseDownload_languagePack = "$eclipseMirror/eclipse//technology/babel/babel_language_packs/R0.11.0/kepler/BabelLanguagePack-eclipse-de_4.3.0.v20130724043401.zip"
 
-  eclipseURLs = [
-    eclipseDownload_main,
-    eclipseDownload_sdk,
-    eclipseDownload_deltaPack,
-    eclipseDownload_languagePack
- ]
+  eclipseSources = [
+    [ url: eclipseDownload_main ],
+    [ url: eclipseDownload_sdk, sourcesOnly: true ],
+    [ url: eclipseDownload_deltaPack ],
+    [ url: eclipseDownload_languagePack, languagePacksOnly: true ]
+  ]
 }
