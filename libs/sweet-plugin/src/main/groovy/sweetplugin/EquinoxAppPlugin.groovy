@@ -56,13 +56,18 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
     EclipseConfig.createEquinoxConfigurations project
 
+    project.configurations {
+      privateLib
+      compile.extendsFrom privateLib
+    }
+
     project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
 
     project.task 'run', type: JavaExec
 
     project.afterEvaluate {
 
-      ManifestUtils.extendManifest project
+      TaskUtils.defineAdditionalTasks project
 
       project.equinox.beforeProductGeneration.each { obj ->
         if(obj instanceof Closure)

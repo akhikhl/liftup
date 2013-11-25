@@ -11,8 +11,15 @@ class EclipseBundlePlugin implements Plugin<Project> {
 
     EclipseConfig.addEclipseBundleDependencies project
 
+    project.configurations {
+      privateLib
+      compile.extendsFrom privateLib
+    }
+
     project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
 
-    project.afterEvaluate { ManifestUtils.extendManifest project }
+    project.afterEvaluate {
+      TaskUtils.defineAdditionalTasks project
+    }
   }
 }
