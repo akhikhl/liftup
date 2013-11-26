@@ -16,6 +16,11 @@ class EclipseConfig {
       compile "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.current_os_suffix}.${PlatformConfig.current_arch_suffix}:+"
       compile "${eclipseGroup}:org.eclipse.ui:+"
     }
+    project.tasks.jar.manifest {
+      instruction 'Require-Bundle', 'org.eclipse.jface'
+      instruction 'Require-Bundle', 'org.eclipse.swt'
+      instruction 'Require-Bundle', 'org.eclipse.ui'
+    }
   }
 
   public static void addEclipseIdeDependencies(Project project) {
@@ -29,6 +34,11 @@ class EclipseConfig {
       compile "$eclipseGroup:org.eclipse.equinox.p2.repository:+"
       compile "$eclipseGroup:org.eclipse.equinox.security:+"
       compile "$eclipseGroup:org.eclipse.ui.intro:+"
+    }
+    project.tasks.jar.manifest {
+      instruction 'Require-Bundle', 'org.eclipse.ui.ide'
+      instruction 'Require-Bundle', 'org.eclipse.ui.ide.application'
+      instruction 'Require-Bundle', 'org.eclipse.ui.intro'
     }
   }
 
@@ -59,6 +69,9 @@ class EclipseConfig {
       compile "${eclipseGroup}:org.eclipse.osgi:+"
       runtime "${eclipseGroup}:org.eclipse.osgi.services:+"
     }
+    project.tasks.jar.manifest {
+      instruction 'Require-Bundle', 'org.eclipse.core.runtime'
+    }
   }
 
   public static void addEquinoxDependencies(Project project, String configName, String platform, String arch) {
@@ -75,6 +88,13 @@ class EclipseConfig {
       compile "${eclipseGroup}:org.eclipse.swt:+"
       compile "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.current_os_suffix}.${PlatformConfig.current_arch_suffix}:+"
       compile "${eclipseGroup}:org.eclipse.ui:+"
+    }
+    project.tasks.jar.manifest {
+      instruction 'Require-Bundle', 'org.eclipse.core.filesystem'
+      instruction 'Require-Bundle', 'org.eclipse.core.net'
+      instruction 'Require-Bundle', 'org.eclipse.jface'
+      instruction 'Require-Bundle', 'org.eclipse.swt'
+      instruction 'Require-Bundle', 'org.eclipse.ui'
     }
   }
 
