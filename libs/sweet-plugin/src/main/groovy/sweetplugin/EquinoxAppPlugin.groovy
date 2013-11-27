@@ -64,6 +64,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
     project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
 
     project.task 'run', type: JavaExec
+    project.task 'debug', type: JavaExec
 
     project.afterEvaluate {
 
@@ -308,10 +309,6 @@ class EquinoxAppPlugin implements Plugin<Project> {
         }
       }
 
-      project.tasks.run.dependsOn project.tasks.prepareRunConfig
-      project.tasks.run.classpath project.files(new File(pluginsDir, equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')))
-      project.tasks.run.main 'org.eclipse.equinox.launcher.Main'
-
       List programArgs = [
         '-configuration',
         runConfigDir,
@@ -333,7 +330,20 @@ class EquinoxAppPlugin implements Plugin<Project> {
         programArgs.add project.run.language
       }
 
-      project.tasks.run.args programArgs
+      project.tasks.run {
+        dependsOn project.tasks.prepareRunConfig
+        classpath = project.files(new File(pluginsDir, equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')))
+        main = 'org.eclipse.equinox.launcher.Main'
+        args = programArgs
+      }
+
+      project.tasks.debug {
+        dependsOn project.tasks.prepareRunConfig
+        classpath = project.files(new File(pluginsDir, equinoxLauncherFile.name.replaceAll(eclipsePluginMask, '$1_$2')))
+        main = 'org.eclipse.equinox.launcher.Main'
+        args = programArgs
+        debug = true
+      }
 
       String outputBaseDir = "${project.buildDir}/output"
 
