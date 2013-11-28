@@ -230,6 +230,8 @@ task('uploadArchives') {
     eclipseDeployer.fixDependencies()
     def corporateDeployment = rootProject.ext.corporateDeployment
     MavenDeployer mavenDeployer = new MavenDeployer(corporateDeployment.url, user: corporateDeployment.user, password: corporateDeployment.password)
+    File mavenAntTasksJar = buildscript.configurations.classpath.find { it.name.contains('maven-ant-tasks') }
+    mavenDeployer.ant.taskdef(resource: 'org/apache/maven/artifact/ant/antlib.xml', classpath: mavenAntTasksJar.absolutePath)
     eclipseDeployer.deployArtifacts(mavenDeployer)
   }
 }
