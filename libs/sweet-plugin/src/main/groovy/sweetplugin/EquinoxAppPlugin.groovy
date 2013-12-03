@@ -499,39 +499,44 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
             if(launchers.contains('shell')) {
               def javaLocation = ''
-              if(jreFolder) {
-                javaLocation = '''SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-${DIR}/jre/bin/'''
-              }
+              if(jreFolder)
+                javaLocation = 'SOURCE="${BASH_SOURCE[0]}"\n' +
+                  'while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink\n' +
+                  'DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )\n' +
+                  'SOURCE="$(readlink "$SOURCE")\n' +
+                  '[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located\n' +
+                  'done\n' +
+                  'DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )\n' +
+                  '${DIR}/jre/bin/'
               File launchScriptFile = new File("${productOutputDir}/${project.name}.sh")
-              launchScriptFile.text = "#!/bin/bash\n${javaLocation}java -jar ${equinoxLauncherName}$launchParameters \"\$@\""
+              launchScriptFile.text = "#!/bin/bash\n${javaLocation}java -jar $equinoxLauncherName$launchParameters \"\$@\""
               launchScriptFile.setExecutable(true)
             }
 
             if(launchers.contains('windows')) {
               def javaLocation = ''
               if(jreFolder)
-                javaLocation = '%~dp0/jre/bin/'
+                javaLocation = '%~dp0\\jre\\bin\\'
               File launchScriptFile = new File("${productOutputDir}/${project.name}.bat")
-              launchScriptFile.text = "@${javaLocation}java -jar ${equinoxLauncherName}$launchParameters %*"
+              launchScriptFile.text = "@start /min ${javaLocation}java.exe -jar $equinoxLauncherName$launchParameters %*"
+              javaLocation = ''
+              if(jreFolder)
+                javaLocation = 'jre\\bin\\'
+              launchScriptFile = new File("${productOutputDir}/${project.name}.vbs")
+              launchScriptFile.text = "Set shell = CreateObject(\"WScript.Shell\")\r\nshell.Run \"cmd /c ${javaLocation}java.exe -jar $equinoxLauncherName$launchParameters\", 0"
             }
 
             String versionFileName = "${productOutputDir}/VERSION"
-            if(platform == 'windows' || launchers.contains('windows'))
+            String lineSep = '\n'
+            if(platform == 'windows' || launchers.contains('windows')) {
               versionFileName += '.txt'
-            new File(versionFileName).text = """\
-product: ${project.name}
-version: ${project.version}
-platform: $platform
-architecture: $arch
-language: $language
-"""
+              lineSep = '\r\n'
+            }
+            new File(versionFileName).text = "product: ${project.name}" + lineSep +
+              "version: ${project.version}" + lineSep +
+              "platform: $platform" + lineSep +
+              "architecture: $arch" + lineSep +
+              "language: $language" + lineSep
           } // doLast
         } // buildProduct_xxx task
 
