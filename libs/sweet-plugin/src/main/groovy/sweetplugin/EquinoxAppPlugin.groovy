@@ -518,7 +518,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
               if(jreFolder)
                 javaLocation = '%~dp0\\jre\\bin\\'
               File launchScriptFile = new File("${productOutputDir}/${project.name}.bat")
-              launchScriptFile.text = "@start /min ${javaLocation}java.exe -jar $equinoxLauncherName$launchParameters %*"
+              launchScriptFile.text = "@start /min cmd /c ${javaLocation}java.exe -jar $equinoxLauncherName$launchParameters %*"
               javaLocation = ''
               if(jreFolder)
                 javaLocation = 'jre\\bin\\'
