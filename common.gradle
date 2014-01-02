@@ -43,11 +43,8 @@ afterEvaluate {
     if(project.parent.name == 'libs') {
       // lib projects should be always installed into "$HOME/.m2"
       project.tasks.build.finalizedBy project.tasks.install
-    }
-
-    if(project.parent.name == 'apps' || project.parent.name == 'examples') {
-      // apps and examples should not be uploaded to maven repository
-      project.tasks.uploadArchives.enabled = false
+      rootProject.tasks.findByName('buildExamples')?.dependsOn project.tasks.install
+      rootProject.tasks.findByName('buildApps')?.dependsOn project.tasks.install
     }
 
     task('createFolders', description: 'Creates the source folders if they do not exist.') << {
