@@ -1,6 +1,6 @@
 sweet
 =====
 
-swt/jface application builder
+Gradle plugin for assembling Eclipse RCP/IDE applications.
 
-Coming soon!
+More information comes soon.
