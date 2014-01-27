@@ -14,8 +14,10 @@ buildscript {
 apply from: 'platformConfig.gradle'
 apply from: 'eclipseDownloadConfig.gradle'
 
-import osgi2maven.bundleImport.*
-import osgi2maven.mavenExport.*
+import osgi2maven.bundleImport.Pom
+import osgi2maven.bundleImport.BundleReader
+import osgi2maven.bundleImport.RequiredBundle
+import osgi2maven.mavenExport.MavenDeployer
 import sweethelpers.*
 
 class EclipseDeployer {
