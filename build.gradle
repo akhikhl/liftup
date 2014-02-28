@@ -1,13 +1,22 @@
-ext {
-  group = 'org.akhikhl.sweet'
-  version = '0.0.5'
-  generateSources = true
-  generateJavadoc = true
+buildscript {
+  apply plugin: 'maven'
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'org.akhikhl.rooty:rooty:0.0.4'
+  }
 }
 
-apply from: 'root.gradle'
+apply plugin: 'rooty'
 
-subprojects {
-  apply from: rootProject.file('common.gradle')
+ext {
+  group = 'org.akhikhl.knyte'
+  version = '0.0.1'
+  generateSources = true
+  generateJavadoc = true
 }
 

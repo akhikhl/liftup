@@ -1,5 +1,4 @@
-sweet
-=====
+# knyte
 
 Gradle plugin for assembling Eclipse RCP/IDE applications.
 

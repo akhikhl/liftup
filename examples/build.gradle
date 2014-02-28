@@ -5,30 +5,18 @@ buildscript {
     mavenLocal()
     mavenCentral()
   }
-  
+
   dependencies {
+    classpath 'org.akhikhl.rooty:rooty:0.0.4'
     classpath 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.5'
-    classpath 'org.akhikhl.sweet:sweet-plugin:0.0.5'
+    classpath 'org.akhikhl.knyte:knyte-gradle-plugin:0.0.1'
   }
 }
 
-apply plugin: 'base' // add "clean" task to the root project.
+apply plugin: 'rooty'
 
 ext {
-  group = 'org.akhikhl.sweet'
-  version = '0.0.5'
-  groovy_version = '2.2.1'
-  logback_version = '1.0.13'
+  group = 'org.akhikhl.knyte.examples'
+  version = '0.0.1'
 }
 
-subprojects {
-  apply plugin: 'maven'
-
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
-
-  group = rootProject.ext.group
-  version = rootProject.ext.version
-}
