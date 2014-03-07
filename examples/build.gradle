@@ -9,14 +9,14 @@ buildscript {
   dependencies {
     classpath 'org.akhikhl.rooty:rooty:0.0.4'
     classpath 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.5'
-    classpath 'org.akhikhl.knyte:knyte-gradle-plugin:0.0.1'
+    classpath 'org.akhikhl.liftup:liftup-plugin:0.0.1'
   }
 }
 
 apply plugin: 'rooty'
 
 ext {
-  group = 'org.akhikhl.knyte.examples'
+  group = 'org.akhikhl.liftup.examples'
   version = '0.0.1'
 }
 

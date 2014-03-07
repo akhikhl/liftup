@@ -1,0 +1,18 @@
+buildscript {
+  apply plugin: 'maven'
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  
+  dependencies {
+    classpath 'org.akhikhl.untangle:untangle-plugin:0.0.1'
+  }
+}
+
+import org.akhikhl.untangle.gradle.UntanglePlugin
+
+if (!project.plugins.findPlugin(UntanglePlugin))
+  project.apply(plugin: UntanglePlugin)
+

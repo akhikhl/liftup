@@ -14,7 +14,7 @@ buildscript {
 apply plugin: 'rooty'
 
 ext {
-  group = 'org.akhikhl.knyte'
+  group = 'org.akhikhl.liftup'
   version = '0.0.1'
   generateSources = true
   generateJavadoc = true
