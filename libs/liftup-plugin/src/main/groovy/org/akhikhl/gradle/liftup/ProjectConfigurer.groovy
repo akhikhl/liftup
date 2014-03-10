@@ -15,7 +15,7 @@ final class ProjectConfigurer {
       // project properties are inherently hierarchical, so parent's eclipseVersion will be inherited
       eclipseVersion = project.eclipseVersion
     else {
-      Project p = findUpAncestorChain(project, { it.eclipse.defaultVersion != null })
+      Project p = findUpAncestorChain(project, { it.extensions.findByName('eclipse')?.defaultVersion != null })
       eclipseVersion = p != null ? p.eclipse.defaultVersion : defaultConfig.defaultVersion
     }
 
