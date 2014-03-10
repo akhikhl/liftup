@@ -1,10 +1,10 @@
 package org.akhikhl.gradle.liftup
 
-final class EclipseConfig {
+class EclipseConfig {
 
   String defaultVersion
 
-  Map versions = [:]
+  Map versionConfigs = [:]
 
   void loadFromResourceFile(String configFileName) {
     Binding binding = new Binding()
@@ -21,7 +21,11 @@ final class EclipseConfig {
   }
 
   void version(String versionString, Closure versionDef) {
-    versions[versionString] = versionDef
+    if(versionConfigs[versionString] == null)
+      versionConfigs[versionString] = new EclipseVersionConfig()
+    versionDef.resolveStrategy = Closure.DELEGATE_FIRST
+    versionDef.delegate = versionConfigs[versionString]
+    versionDef()
   }
 }
 
