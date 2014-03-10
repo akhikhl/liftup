@@ -4,14 +4,16 @@ class EclipseVersionConfig {
 
   String eclipseGroup
 
-  // project type to list of closures, each closure represents injector
-  Map projectConfigs = [:]
+  Map modelConfigs = [:]
 
-  def methodMissing(String configName, args) {
-    if(projectConfigs[configName] == null)
-      projectConfigs[configName] = []
+  def methodMissing(String modelName, args) {
+    if(modelConfigs[modelName] == null)
+      modelConfigs[modelName] = []
     args.each {
-      projectConfigs[configName].add it
+      if(it instanceof Closure)
+        modelConfigs[modelName].add new EclipseModelConfig(common: it)
+      else if (it instanceof Map)
+        modelConfigs[modelName].add new EclipseModelConfig(common: it.common, platformSpecific: it.platformSpecific, platformAndLanguageSpecific: it.platformAndLanguageSpecific)
     }
   }
 }

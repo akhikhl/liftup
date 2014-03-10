@@ -12,26 +12,28 @@ class SwtAppPlugin implements Plugin<Project> {
 
     project.apply plugin: 'onejar'
 
+    project.extensions.create('eclipse', EclipseConfig)
     project.extensions.create('swtapp', SwtAppPluginExtension)
-
-    EclipseHelpers.addSwtAppDependencies project
-
-    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
 
     // we use onejar hook, because we need to populate onejar config
     // before onejar starts to generate products.
     project.onejar.beforeProductGeneration {
 
+      def configurer = new ProjectConfigurer(project)
+      configurer.configure('swtapp')
+
       PlatformConfig.supported_oses.each { platform ->
         PlatformConfig.supported_archs.each { arch ->
           String configName = "product_swt_${platform}_${arch}"
           def config = project.configurations.create(configName)
-          EclipseHelpers.addSwtAppDependencies project, configName, platform, arch
+          configurer.configure('swtapp', { model, proj -> model.platformSpecific?.call(proj, configName, platform, arch) })
+          //EclipseHelpers.addSwtAppDependencies project, configName, platform, arch
           PlatformConfig.supported_languages.each { language ->
             String localizedConfigName = "product_swt_${platform}_${arch}_${language}"
             def localizedConfig = project.configurations.create(localizedConfigName)
             localizedConfig.extendsFrom config
-            EclipseHelpers.addSwtAppDependencies project, localizedConfigName, platform, arch, language
+            configurer.configure('swtapp', { model, proj -> model.platformAndLanguageSpecific?.call(proj, localizedConfigName, platform, arch, language) })
+            //EclipseHelpers.addSwtAppDependencies project, localizedConfigName, platform, arch, language
           }
         }
       }

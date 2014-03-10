@@ -5,12 +5,18 @@ import org.gradle.api.Project
 
 final class ProjectConfigurer {
 
-  static void configure(Project project, String configName) {
+  private static final Closure defaultModelAction = { model, project ->
+    model.common?.call(project)
+  }
 
-    EclipseConfig defaultConfig = new EclipseConfig()
+  private final Project project
+  private final EclipseConfig defaultConfig
+  private final String eclipseVersion
+
+  ProjectConfigurer(Project project) {
+    this.project = project
+    defaultConfig = new EclipseConfig()
     defaultConfig.loadFromResourceFile('defaultEclipseConfig.groovy')
-
-    String eclipseVersion
     if(project.hasProperty('eclipseVersion'))
       // project properties are inherently hierarchical, so parent's eclipseVersion will be inherited
       eclipseVersion = project.eclipseVersion
@@ -18,27 +24,37 @@ final class ProjectConfigurer {
       Project p = findUpAncestorChain(project, { it.extensions.findByName('eclipse')?.defaultVersion != null })
       eclipseVersion = p != null ? p.eclipse.defaultVersion : defaultConfig.defaultVersion
     }
+  }
 
-    def applyEclipseConfig = { EclipseConfig eclipseConfig ->
+  void configure(String modelName, Closure modelAction = defaultModelAction) {
+
+    def applyModels = { EclipseConfig eclipseConfig ->
       EclipseVersionConfig versionConfig = eclipseConfig.versionConfigs[eclipseVersion]
       if(versionConfig != null) {
         if(versionConfig.eclipseGroup != null)
           project.ext.eclipseGroup = versionConfig.eclipseGroup
-        def projectConfigs = versionConfig.projectConfigs[configName]
-        projectConfigs?.each { Closure projectConfig ->
-          projectConfig.resolveStrategy = Closure.DELEGATE_FIRST
-          projectConfig.delegate = PlatformConfig
-          projectConfig(project)
+        def modelConfigs = versionConfig.modelConfigs[modelName]
+        modelConfigs?.each { EclipseModelConfig modelConfig ->
+          def modelDelegate = new Object() {
+            void apply(closure, project) {
+              closure = closure.rehydrate(PlatformConfig, closure.owner, closure.thisObject)
+              closure.resolveStrategy = Closure.DELEGATE_FIRST
+              closure(project)
+            }
+          }
+          modelAction = modelAction.rehydrate(modelDelegate, modelAction.owner, modelAction.thisObject)
+          modelAction.resolveStrategy = Closure.DELEGATE_FIRST
+          modelAction(modelConfig, project)
         }
       }
     }
 
-    applyEclipseConfig(defaultConfig)
+    applyModels(defaultConfig)
 
     withAllAncestors(project).each { Project p ->
       EclipseConfig config = p.extensions.findByName('eclipse')
       if(config)
-        applyEclipseConfig(config)
+        applyModels(config)
     }
   }
 
