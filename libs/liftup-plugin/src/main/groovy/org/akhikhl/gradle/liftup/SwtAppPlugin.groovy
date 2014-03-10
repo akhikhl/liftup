@@ -14,9 +14,9 @@ class SwtAppPlugin implements Plugin<Project> {
 
     project.extensions.create('swtapp', SwtAppPluginExtension)
 
-    EclipseConfig.addSwtAppDependencies project
+    EclipseHelpers.addSwtAppDependencies project
 
-    project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
+    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
 
     // we use onejar hook, because we need to populate onejar config
     // before onejar starts to generate products.
@@ -26,12 +26,12 @@ class SwtAppPlugin implements Plugin<Project> {
         PlatformConfig.supported_archs.each { arch ->
           String configName = "product_swt_${platform}_${arch}"
           def config = project.configurations.create(configName)
-          EclipseConfig.addSwtAppDependencies project, configName, platform, arch
+          EclipseHelpers.addSwtAppDependencies project, configName, platform, arch
           PlatformConfig.supported_languages.each { language ->
             String localizedConfigName = "product_swt_${platform}_${arch}_${language}"
             def localizedConfig = project.configurations.create(localizedConfigName)
             localizedConfig.extendsFrom config
-            EclipseConfig.addSwtAppDependencies project, localizedConfigName, platform, arch, language
+            EclipseHelpers.addSwtAppDependencies project, localizedConfigName, platform, arch, language
           }
         }
       }

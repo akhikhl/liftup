@@ -9,14 +9,14 @@ class EclipseBundlePlugin implements Plugin<Project> {
 
     project.apply plugin: 'osgi'
 
-    EclipseConfig.addEclipseBundleDependencies project
+    EclipseHelpers.addEclipseBundleDependencies project
 
     project.configurations {
       privateLib
       compile.extendsFrom privateLib
     }
 
-    project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
+    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
 
     project.afterEvaluate {
       TaskUtils.defineAdditionalTasks project

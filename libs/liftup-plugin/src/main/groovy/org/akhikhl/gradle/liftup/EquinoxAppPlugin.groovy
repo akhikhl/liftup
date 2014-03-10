@@ -52,16 +52,16 @@ class EquinoxAppPlugin implements Plugin<Project> {
     project.extensions.create('run', RunExtension)
     project.extensions.create('equinox', EquinoxAppPluginExtension)
 
-    EclipseConfig.addEquinoxDependencies project
+    EclipseHelpers.addEquinoxDependencies project
 
-    EclipseConfig.createEquinoxConfigurations project
+    EclipseHelpers.createEquinoxConfigurations project
 
     project.configurations {
       privateLib
       compile.extendsFrom privateLib
     }
 
-    project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
+    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
 
     project.task 'run', type: JavaExec
     project.task 'debug', type: JavaExec

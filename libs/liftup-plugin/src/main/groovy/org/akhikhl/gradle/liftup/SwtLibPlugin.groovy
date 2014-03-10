@@ -7,8 +7,8 @@ class SwtLibPlugin implements Plugin<Project> {
 
   void apply(final Project project) {
 
-    EclipseConfig.addSwtLibDependencies project
+    EclipseHelpers.addSwtLibDependencies project
 
-    project.ext { eclipseGroup = EclipseConfig.eclipseGroup }
+    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
   }
 }

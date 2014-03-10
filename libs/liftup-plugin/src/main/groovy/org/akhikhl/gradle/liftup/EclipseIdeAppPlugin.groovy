@@ -27,11 +27,11 @@ class EclipseIdeAppPlugin implements Plugin<Project> {
 
     project.extensions.create('eclipseIde', EclipseIdeAppPluginExtension)
 
-    EclipseConfig.addRcpDependencies project
-    EclipseConfig.addEclipseIdeDependencies project
+    EclipseHelpers.addRcpDependencies project
+    EclipseHelpers.addEclipseIdeDependencies project
 
-    EclipseConfig.createRcpConfigurations project
-    EclipseConfig.createEclipseIdeConfigurations project
+    EclipseHelpers.createRcpConfigurations project
+    EclipseHelpers.createEclipseIdeConfigurations project
 
     project.equinox.beforeProductGeneration {
 

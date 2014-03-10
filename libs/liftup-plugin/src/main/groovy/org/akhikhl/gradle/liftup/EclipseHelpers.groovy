@@ -2,7 +2,7 @@ package org.akhikhl.gradle.liftup
 
 import org.gradle.api.Project
 
-class EclipseConfig {
+class EclipseHelpers {
 
   // eclipseGroup must be the same as in "eclipseDownloadConfig.gradle"
   public static final String eclipseGroup = 'eclipse-kepler'

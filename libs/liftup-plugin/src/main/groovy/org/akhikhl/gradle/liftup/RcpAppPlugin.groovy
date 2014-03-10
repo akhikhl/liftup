@@ -14,9 +14,9 @@ class RcpAppPlugin implements Plugin<Project> {
 
     project.extensions.create('rcp', RcpAppPluginExtension)
 
-    EclipseConfig.addRcpDependencies project
+    EclipseHelpers.addRcpDependencies project
 
-    EclipseConfig.createRcpConfigurations project
+    EclipseHelpers.createRcpConfigurations project
 
     project.equinox.beforeProductGeneration {
 
