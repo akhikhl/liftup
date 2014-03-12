@@ -110,30 +110,6 @@ class EclipseHelpers {
     project.dependencies.add configName, "${eclipseGroup}:org.eclipse.ui.nl_${language}:+"
   }
 
-  public static void addSwtAppDependencies(Project project) {
-    project.dependencies {
-      compile "${eclipseGroup}:org.eclipse.jface:+"
-      compile "${eclipseGroup}:org.eclipse.swt:+"
-      compile "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.current_os_suffix}.${PlatformConfig.current_arch_suffix}:+"
-    }
-  }
-
-  public static void addSwtAppDependencies(Project project, String configName, String platform, String arch) {
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.map_os_to_suffix[platform]}.${PlatformConfig.map_arch_to_suffix[arch]}:+"
-  }
-
-  public static void addSwtAppDependencies(Project project, String configName, String platform, String arch, String language) {
-    project.dependencies.add configName, "${eclipseGroup}:org.eclipse.jface.nl_${language}:+"
-  }
-
-  public static void addSwtLibDependencies(Project project) {
-    project.dependencies {
-      compile "${eclipseGroup}:org.eclipse.jface:+"
-      compile "${eclipseGroup}:org.eclipse.swt:+"
-      compile "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.current_os_suffix}.${PlatformConfig.current_arch_suffix}:+"
-    }
-  }
-
   public static void createEclipseIdeConfigurations(Project project) {
     PlatformConfig.supported_oses.each { platform ->
       PlatformConfig.supported_archs.each { arch ->
