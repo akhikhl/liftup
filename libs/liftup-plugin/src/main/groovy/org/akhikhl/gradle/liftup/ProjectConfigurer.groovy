@@ -35,15 +35,12 @@ final class ProjectConfigurer {
           project.ext.eclipseGroup = versionConfig.eclipseGroup
         def modelConfigs = versionConfig.modelConfigs[modelName]
         modelConfigs?.each { EclipseModelConfig modelConfig ->
-          def modelDelegate = new Object() {
-            void apply(closure, project) {
-              closure = closure.rehydrate(PlatformConfig, closure.owner, closure.thisObject)
-              closure.resolveStrategy = Closure.DELEGATE_FIRST
-              closure(project)
+          modelConfig.properties.each { key, value ->
+            if(value instanceof Closure) {
+              value.delegate = PlatformConfig
+              value.resolveStrategy = Closure.DELEGATE_FIRST
             }
           }
-          modelAction = modelAction.rehydrate(modelDelegate, modelAction.owner, modelAction.thisObject)
-          modelAction.resolveStrategy = Closure.DELEGATE_FIRST
           modelAction(modelConfig, project)
         }
       }
