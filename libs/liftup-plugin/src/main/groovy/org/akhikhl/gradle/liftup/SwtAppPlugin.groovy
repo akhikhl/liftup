@@ -27,13 +27,11 @@ class SwtAppPlugin implements Plugin<Project> {
           String configName = "product_swt_${platform}_${arch}"
           def config = project.configurations.create(configName)
           configurer.configure('swtapp', { model, proj -> model.platformSpecific?.call(proj, configName, platform, arch) })
-          //EclipseHelpers.addSwtAppDependencies project, configName, platform, arch
           PlatformConfig.supported_languages.each { language ->
             String localizedConfigName = "product_swt_${platform}_${arch}_${language}"
             def localizedConfig = project.configurations.create(localizedConfigName)
             localizedConfig.extendsFrom config
             configurer.configure('swtapp', { model, proj -> model.platformAndLanguageSpecific?.call(proj, localizedConfigName, platform, arch, language) })
-            //EclipseHelpers.addSwtAppDependencies project, localizedConfigName, platform, arch, language
           }
         }
       }

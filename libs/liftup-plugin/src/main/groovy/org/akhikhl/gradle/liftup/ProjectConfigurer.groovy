@@ -21,7 +21,7 @@ final class ProjectConfigurer {
       // project properties are inherently hierarchical, so parent's eclipseVersion will be inherited
       eclipseVersion = project.eclipseVersion
     else {
-      Project p = findUpAncestorChain(project, { it.extensions.findByName('eclipse')?.defaultVersion != null })
+      Project p = ProjectUtils.findUpAncestorChain(project, { it.extensions.findByName('eclipse')?.defaultVersion != null })
       eclipseVersion = p != null ? p.eclipse.defaultVersion : defaultConfig.defaultVersion
     }
   }
@@ -48,27 +48,10 @@ final class ProjectConfigurer {
 
     applyModels(defaultConfig)
 
-    withAllAncestors(project).each { Project p ->
+    ProjectUtils.withAllAncestors(project).each { Project p ->
       EclipseConfig config = p.extensions.findByName('eclipse')
       if(config)
         applyModels(config)
     }
-  }
-
-  private static findUpAncestorChain(Project project, Closure condition) {
-    Project p = project
-    while(p != null && !condition(p))
-      p = p.parent
-    return p
-  }
-
-  private static List withAllAncestors(Project project) {
-    List projects = []
-    Project p = project
-    while(p != null) {
-      projects.add(0, p)
-      p = p.parent
-    }
-    return projects
   }
 }
