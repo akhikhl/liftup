@@ -7,7 +7,7 @@ import org.gradle.api.tasks.bundling.*
 
 class TaskUtils {
 
-  static void defineAdditionalTasks(Project project) {
+  static void defineEclipseBundleTasks(Project project) {
 
     File manifestFile = new File("${project.buildDir}/tmp/manifests/extendedManifest/MANIFEST.MF")
 
@@ -16,7 +16,7 @@ class TaskUtils {
       inputs.files { project.configurations.runtime }
       outputs.files manifestFile
       doLast {
-        // fix for problem with non-existing classesDir, when the project contains no java/groovy sources
+        // fix problem with non-existing classesDir, when the project contains no java/groovy sources
         // (resources-only project)
         project.sourceSets.main.output.classesDir.mkdirs()
 
@@ -112,23 +112,11 @@ class TaskUtils {
           m.attributes['Import-Package'] = ManifestUtils.packagesToString(importPackages)
         }
 
-        def platformFragment = { artifact ->
-          PlatformConfig.supported_oses.find { os ->
-            PlatformConfig.supported_archs.find { arch ->
-              artifact.name.endsWith PlatformConfig.map_os_to_suffix[os] + '.' + PlatformConfig.map_arch_to_suffix[arch]
-            }
-          }
-        }
-
-        def languageFragment = { artifact ->
-          artifact.name.contains '.nl_'
-        }
-
         def requiredBundles = [ 'org.eclipse.core.runtime', 'org.eclipse.core.resources' ] as LinkedHashSet
         if(pluginConfig && pluginConfig.extension.find { it.'@point'.startsWith 'org.eclipse.core.expressions' })
           requiredBundles.add 'org.eclipse.core.expressions'
         project.configurations.compile.allDependencies.each {
-          if(it.name.startsWith('org.eclipse.') && !platformFragment(it) && !languageFragment(it))
+          if(it.name.startsWith('org.eclipse.') && !PlatformConfig.isPlatformFragment(it) && !PlatformConfig.isLanguageFragment(it))
             requiredBundles.add it.name
         }
         m.attributes 'Require-Bundle': requiredBundles.sort().join(',')
@@ -202,5 +190,5 @@ class TaskUtils {
       }
     } // jar task
 
-  } // defineAdditionalTasks
+  } // defineEclipseBundleTasks
 }

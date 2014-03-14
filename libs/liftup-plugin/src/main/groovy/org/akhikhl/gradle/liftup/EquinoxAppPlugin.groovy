@@ -68,7 +68,7 @@ class EquinoxAppPlugin implements Plugin<Project> {
 
     project.afterEvaluate {
 
-      TaskUtils.defineAdditionalTasks project
+      TaskUtils.defineEclipseBundleTasks project
 
       project.equinox.beforeProductGeneration.each { obj ->
         if(obj instanceof Closure)

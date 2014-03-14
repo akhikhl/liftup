@@ -45,4 +45,16 @@ class PlatformConfig {
 
     current_arch_suffix = map_arch_to_suffix[current_arch]
   }
+
+  static boolean isLanguageFragment(artifact) {
+    artifact.name.contains '.nl_'
+  }
+  
+  static boolean isPlatformFragment(artifact) {
+    supported_oses.find { os ->
+      supported_archs.find { arch ->
+        artifact.name.endsWith map_os_to_suffix[os] + '.' + map_arch_to_suffix[arch]
+      }
+    }
+  }
 }

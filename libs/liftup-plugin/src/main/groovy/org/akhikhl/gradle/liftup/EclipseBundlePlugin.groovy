@@ -19,7 +19,7 @@ class EclipseBundlePlugin implements Plugin<Project> {
     project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
 
     project.afterEvaluate {
-      TaskUtils.defineAdditionalTasks project
+      TaskUtils.defineEclipseBundleTasks project
     }
   }
 }
