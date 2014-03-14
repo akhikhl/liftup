@@ -31,25 +31,17 @@ class TaskUtils {
 
         String activator = ProjectUtils.findBundleActivator(project)
         if(activator) {
-          project.logger.warn '{}: Found bundle activator: {}', project.name, activator
+          project.logger.info '{}: Found bundle activator: {}', project.name, activator
           m.attributes['Bundle-Activator'] = activator
           m.attributes['Bundle-ActivationPolicy'] = 'lazy'
         }
 
-        def pluginConfig = null
-        project.sourceSets.main.resources.srcDirs.each { File srcDir ->
-          if(srcDir.exists()) {
-            File locatizationDir = new File(srcDir, 'OSGI-INF/l10n')
-            // if locatizationDir exists, it will be used by OSGi automatically
-            // and there's no need for Bundle-Localization
-            if(!locatizationDir.exists()) {
-              def localizationFiles = new FileNameFinder().getFileNames(srcDir.absolutePath, 'plugin*.properties')
-              if(localizationFiles)
-                m.attributes['Bundle-Localization'] = 'plugin'
-            }
-            if(new File(srcDir, 'plugin.xml').exists())
-              pluginConfig = new XmlParser().parse(new File(srcDir, 'plugin.xml'))
-          }
+        def pluginConfig = ProjectUtils.findPluginConfig(project)
+
+        def localizationFiles = ProjectUtils.findPluginLocalizationFiles(project)
+        if(localizationFiles) {
+          project.logger.info '{}: Found bundle localization files: {}', project.name, localizationFiles
+          m.attributes['Bundle-Localization'] = 'plugin'
         }
 
         if(pluginConfig) {
