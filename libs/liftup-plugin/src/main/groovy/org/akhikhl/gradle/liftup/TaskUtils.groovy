@@ -31,52 +31,32 @@ class TaskUtils {
 
         String activator = ProjectUtils.findBundleActivator(project)
         if(activator) {
-          project.logger.info '{}: Found bundle activator: {}', project.name, activator
           m.attributes['Bundle-Activator'] = activator
           m.attributes['Bundle-ActivationPolicy'] = 'lazy'
         }
 
         def pluginConfig = ProjectUtils.findPluginConfig(project)
 
-        def localizationFiles = ProjectUtils.findPluginLocalizationFiles(project)
-        if(localizationFiles) {
-          project.logger.info '{}: Found bundle localization files: {}', project.name, localizationFiles
-          m.attributes['Bundle-Localization'] = 'plugin'
-        }
-
         if(pluginConfig) {
-          Map importPackages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
           m.attributes['Bundle-SymbolicName'] = "${project.name}; singleton:=true" as String
-          project.logger.info 'Analyzing class usage in {}/plugin.xml', project.name
-          def classes = pluginConfig.extension.'**'.findAll({ it.'@class' })*.'@class' + pluginConfig.extension.'**'.findAll({ it.'@contributorClass' })*.'@contributorClass'
-          def packages = classes.collect { it.substring(0, it.lastIndexOf('.')) }.unique(false)
-          packages.each { String packageName ->
-            String packagePath = packageName.replaceAll(/\./, '/')
-            if(project.sourceSets.main.resources.srcDirs.find { new File(it, packagePath).exists() })
-              project.logger.info 'Found package {} within {}, no import needed', packageName, project.name
-            else {
-              project.logger.info 'Did not find package {} within {}, will be imported', packageName, project.name
-              importPackages[packageName] = ''
-            }
-          }
+          Map importPackages = ProjectUtils.findImportPackagesInPluginConfigFile(project, pluginConfig).collectEntries { [ it, '' ] }
+          importPackages << ManifestUtils.parsePackages(m.attributes['Import-Package'])
           m.attributes['Import-Package'] = ManifestUtils.packagesToString(importPackages)
         }
         else
           m.attributes['Bundle-SymbolicName'] = project.name
 
+        def localizationFiles = ProjectUtils.collectPluginLocalizationFiles(project)
+        if(localizationFiles)
+          m.attributes['Bundle-Localization'] = 'plugin'
+
         if(project.configurations.privateLib.files) {
-          Map privatePackages = [:]
-          project.configurations.privateLib.files.each { File lib ->
-            project.zipTree(lib).visit { f ->
-              if(f.isDirectory())
-                privatePackages[f.path.replaceAll('/', '.')] = lib.name
-            }
-          }
           Map importPackages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
-          privatePackages.each { privatePackage, lib ->
-            if(importPackages.containsKey(privatePackage)) {
-              project.logger.info 'Package {} is located in private library {}, will be excluded from Import-Package.', privatePackage, lib
-              importPackages['!' + privatePackage] = importPackages.remove(privatePackage)
+          ProjectUtils.collectPrivateLibPackages(project).each { privatePackage ->
+            def packageValue = importPackages.remove(privatePackage)
+            if(packageValue != null) {
+              project.logger.info 'Package {} is referenced by private library, will be excluded from Import-Package.', privatePackage
+              importPackages['!' + privatePackage] = packageValue
             }
           }
           m.attributes['Import-Package'] = ManifestUtils.packagesToString(importPackages)
@@ -91,7 +71,6 @@ class TaskUtils {
         }
         m.attributes 'Require-Bundle': requiredBundles.sort().join(',')
 
-        // Bundle-Classpath
         def bundleClasspath = m.attributes['Bundle-Classpath']
         if(bundleClasspath)
           bundleClasspath = bundleClasspath.split(',\\s*').collect()

@@ -48,7 +48,7 @@ final class ProjectConfigurer {
 
     applyModels(defaultConfig)
 
-    ProjectUtils.withAllAncestors(project).each { Project p ->
+    ProjectUtils.collectWithAllAncestors(project).each { Project p ->
       EclipseConfig config = p.extensions.findByName('eclipse')
       if(config)
         applyModels(config)
