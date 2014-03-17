@@ -101,33 +101,9 @@ class TaskUtils {
           eachEntry { details ->
             def newValue
             if(details.key == 'Require-Bundle') {
-              if(details.baseValue && details.mergeValue)
-                newValue = ((details.baseValue.split(',') as Set) + (details.mergeValue.split(',') as Set)).join(',')
-              else
-                newValue = details.mergeValue ?: details.baseValue
+              newValue = mergeRequireBundle(details.baseValue, details.mergeValue)
             } else if(details.key == 'Import-Package' || details.key == 'Export-Package') {
-              Map packages
-              if(details.baseValue) {
-                packages = ManifestUtils.parsePackages(details.baseValue)
-                if(details.mergeValue)
-                  ManifestUtils.parsePackages(details.mergeValue).each {
-                    if(it.key.startsWith('!'))
-                      packages.remove(it.key.substring(1))
-                    else
-                      packages[it.key] = it.value
-                  }
-              }
-              else if(details.mergeValue)
-                packages = ManifestUtils.parsePackages(details.mergeValue).findAll { !it.key.startsWith('!') }
-              else
-                packages = [:]
-              /*
-               * here we fix problem with eclipse 4.X bundles and access to bundle
-               * 'org.eclipse.core.runtime': if the latter is imported via 'Import-Package',
-               * the application throws ClassNotFoundException.
-               */
-              packages = packages.findAll { !it.key.startsWith('org.eclipse') }
-              newValue = ManifestUtils.packagesToString(packages)
+              newValue = mergePackageList(details.baseValue, details.mergeValue)
             } else
               newValue = details.mergeValue ?: details.baseValue
             if(newValue)
@@ -140,4 +116,35 @@ class TaskUtils {
     } // jar task
 
   } // defineEclipseBundleTasks
+
+  private static String mergePackageList(String baseValue, String mergeValue) {
+    Map packages
+    if(baseValue) {
+      packages = ManifestUtils.parsePackages(baseValue)
+      if(mergeValue)
+        ManifestUtils.parsePackages(mergeValue).each {
+          if(it.key.startsWith('!'))
+            packages.remove(it.key.substring(1))
+          else
+            packages[it.key] = it.value
+        }
+    }
+    else if(mergeValue)
+      packages = ManifestUtils.parsePackages(mergeValue).findAll { !it.key.startsWith('!') }
+    else
+      packages = [:]
+    /*
+     * Here we fix the problem with eclipse 4.X bundles:
+     * if 'org.eclipse.xxx' are imported via 'Import-Package',
+     * the application throws ClassNotFoundException.
+     */
+    packages = packages.findAll { !it.key.startsWith('org.eclipse') }
+    return ManifestUtils.packagesToString(packages)
+  }
+
+  private static String mergeRequireBundle(String baseValue, String mergeValue) {
+    if(baseValue && mergeValue)
+      return ((baseValue.split(',') as Set) + (mergeValue.split(',') as Set)).join(',')
+    return mergeValue ?: baseValue
+  }
 }
