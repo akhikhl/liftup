@@ -7,22 +7,6 @@ class EclipseHelpers {
   // eclipseGroup must be the same as in "eclipseDownloadConfig.gradle"
   public static final String eclipseGroup = 'eclipse-kepler'
 
-  public static void addEclipseBundleDependencies(Project project) {
-    project.dependencies {
-      compile "${eclipseGroup}:javax.annotation:+"
-      compile "${eclipseGroup}:javax.inject:+"
-      compile "${eclipseGroup}:org.eclipse.jface:+"
-      compile "${eclipseGroup}:org.eclipse.swt:+"
-      compile "${eclipseGroup}:org.eclipse.swt.${PlatformConfig.current_os_suffix}.${PlatformConfig.current_arch_suffix}:+"
-      compile "${eclipseGroup}:org.eclipse.ui:+"
-    }
-    project.tasks.jar.manifest {
-      instruction 'Require-Bundle', 'org.eclipse.jface'
-      instruction 'Require-Bundle', 'org.eclipse.swt'
-      instruction 'Require-Bundle', 'org.eclipse.ui'
-    }
-  }
-
   public static void addEclipseIdeDependencies(Project project) {
     project.dependencies {
       compile "$eclipseGroup:org.eclipse.ui.ide:+"

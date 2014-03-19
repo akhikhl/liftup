@@ -27,5 +27,25 @@ eclipse {
     platformAndLanguageSpecific: { project, configName, platform, arch, language ->
       project.dependencies.add configName, "${eclipseGroup}:org.eclipse.jface.nl_${language}:+"
     }
+
+    eclipseBundle { project ->
+      project.configurations {
+        privateLib
+        compile.extendsFrom privateLib
+      }
+      project.dependencies {
+        compile "${eclipseGroup}:javax.annotation:+"
+        compile "${eclipseGroup}:javax.inject:+"
+        compile "${eclipseGroup}:org.eclipse.jface:+"
+        compile "${eclipseGroup}:org.eclipse.swt:+"
+        compile "${eclipseGroup}:org.eclipse.swt.${current_os_suffix}.${current_arch_suffix}:+"
+        compile "${eclipseGroup}:org.eclipse.ui:+"
+      }
+      project.tasks.jar.manifest {
+        instruction 'Require-Bundle', 'org.eclipse.jface'
+        instruction 'Require-Bundle', 'org.eclipse.swt'
+        instruction 'Require-Bundle', 'org.eclipse.ui'
+      }
+    }
   }
 }

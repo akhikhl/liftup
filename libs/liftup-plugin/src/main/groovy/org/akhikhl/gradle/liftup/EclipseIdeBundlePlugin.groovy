@@ -6,20 +6,11 @@ import org.gradle.api.Project
 class EclipseIdeBundlePlugin implements Plugin<Project> {
 
   void apply(final Project project) {
-
     project.apply plugin: 'osgi'
-
-    EclipseHelpers.addEclipseBundleDependencies project
-    EclipseHelpers.addEclipseIdeDependencies project
-
-    project.configurations {
-      privateLib
-      compile.extendsFrom privateLib
-    }
-
-    project.ext { eclipseGroup = EclipseHelpers.eclipseGroup }
-
+    project.extensions.create('eclipse', EclipseConfig)
     project.afterEvaluate {
+      new ProjectConfigurer(project).configure('eclipseBundle')
+      EclipseHelpers.addEclipseIdeDependencies project
       TaskUtils.defineEclipseBundleTasks project
     }
   }
