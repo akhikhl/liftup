@@ -10,19 +10,19 @@ class EclipseHelpers {
   public static void addEclipseIdeDependencies(Project project) {
     project.dependencies {
       compile "$eclipseGroup:org.eclipse.ui.ide:+"
-      compile "$eclipseGroup:org.eclipse.ui.ide.application:+"
+      /*compile "$eclipseGroup:org.eclipse.ui.ide.application:+"
       compile "$eclipseGroup:org.eclipse.equinox.p2.core:+"
       compile "$eclipseGroup:org.eclipse.equinox.p2.engine:+"
       compile "$eclipseGroup:org.eclipse.equinox.p2.metadata:+"
       compile "$eclipseGroup:org.eclipse.equinox.p2.metadata.repository:+"
       compile "$eclipseGroup:org.eclipse.equinox.p2.repository:+"
       compile "$eclipseGroup:org.eclipse.equinox.security:+"
-      compile "$eclipseGroup:org.eclipse.ui.intro:+"
+      compile "$eclipseGroup:org.eclipse.ui.intro:+"*/
     }
     project.tasks.jar.manifest {
       instruction 'Require-Bundle', 'org.eclipse.ui.ide'
-      instruction 'Require-Bundle', 'org.eclipse.ui.ide.application'
-      instruction 'Require-Bundle', 'org.eclipse.ui.intro'
+      //instruction 'Require-Bundle', 'org.eclipse.ui.ide.application'
+      //instruction 'Require-Bundle', 'org.eclipse.ui.intro'
     }
   }
 

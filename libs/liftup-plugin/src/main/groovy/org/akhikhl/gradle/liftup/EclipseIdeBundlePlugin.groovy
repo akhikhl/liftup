@@ -8,8 +8,10 @@ class EclipseIdeBundlePlugin implements Plugin<Project> {
   void apply(final Project project) {
     project.apply plugin: 'osgi'
     project.extensions.create('eclipse', EclipseConfig)
+    def configurer = new ProjectConfigurer(project)
+    configurer.preConfigure('eclipseIdeBundle')
     project.afterEvaluate {
-      new ProjectConfigurer(project).configure('eclipseBundle')
+      configurer.configure('eclipseIdeBundle')
       EclipseHelpers.addEclipseIdeDependencies project
       TaskUtils.defineEclipseBundleTasks project
     }

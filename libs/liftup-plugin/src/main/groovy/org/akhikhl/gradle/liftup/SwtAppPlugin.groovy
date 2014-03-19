@@ -15,11 +15,13 @@ class SwtAppPlugin implements Plugin<Project> {
     project.extensions.create('eclipse', EclipseConfig)
     project.extensions.create('swtapp', SwtAppPluginExtension)
 
+    def configurer = new ProjectConfigurer(project)
+    configurer.preConfigure()
+
     // we use onejar hook, because we need to populate onejar config
     // before onejar starts to generate products.
     project.onejar.beforeProductGeneration {
 
-      def configurer = new ProjectConfigurer(project)
       configurer.configure('swtapp')
 
       PlatformConfig.supported_oses.each { platform ->

@@ -9,20 +9,25 @@ final class ProjectConfigurer {
     model.common?.call(project)
   }
 
+  private static EclipseConfig defaultConfig
+
   private final Project project
-  private final EclipseConfig defaultConfig
   private final String eclipseVersion
 
   ProjectConfigurer(Project project) {
     this.project = project
-    defaultConfig = new EclipseConfig()
-    defaultConfig.loadFromResourceFile('defaultEclipseConfig.groovy')
+    if(defaultConfig == null) {
+      defaultConfig = new EclipseConfig()
+      defaultConfig.loadFromResourceFile('defaultEclipseConfig.groovy')
+    }
     if(project.hasProperty('eclipseVersion'))
       // project properties are inherently hierarchical, so parent's eclipseVersion will be inherited
       eclipseVersion = project.eclipseVersion
     else {
       Project p = ProjectUtils.findUpAncestorChain(project, { it.extensions.findByName('eclipse')?.defaultVersion != null })
       eclipseVersion = p != null ? p.eclipse.defaultVersion : defaultConfig.defaultVersion
+      if(eclipseVersion == null)
+        eclipseVersion = defaultConfig.defaultVersion
     }
   }
 
@@ -52,6 +57,12 @@ final class ProjectConfigurer {
       EclipseConfig config = p.extensions.findByName('eclipse')
       if(config)
         applyModels(config)
+    }
+  }
+
+  void preConfigure(String modelName) {
+    configure 'eclipseBundle', { model, proj ->
+      model.preConfigure?.call(proj)
     }
   }
 }

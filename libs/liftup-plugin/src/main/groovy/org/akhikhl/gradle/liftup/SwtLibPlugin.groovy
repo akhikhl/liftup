@@ -7,8 +7,10 @@ class SwtLibPlugin implements Plugin<Project> {
 
   void apply(final Project project) {
     project.extensions.create('eclipse', EclipseConfig)
+    def configurer = new ProjectConfigurer(project)
+    configurer.preConfigure('swtlib')
     project.afterEvaluate {
-      new ProjectConfigurer(project).configure('swtlib')
+      configurer.configure('swtlib')
     }
   }
 }
