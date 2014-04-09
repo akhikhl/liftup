@@ -8,7 +8,7 @@ buildscript {
 
   dependencies {
     classpath 'org.akhikhl.rooty:rooty:0.0.4'
-    classpath 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.5'
+    classpath 'org.akhikhl.gradle-onejar:gradle-onejar:0.0.7'
     classpath 'org.akhikhl.liftup:liftup-plugin:0.0.1'
   }
 }
