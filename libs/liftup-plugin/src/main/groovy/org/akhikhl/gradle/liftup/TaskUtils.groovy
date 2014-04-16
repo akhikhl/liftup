@@ -4,6 +4,8 @@ import org.gradle.api.*
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.*
+import java.util.regex.Matcher
+
 
 class TaskUtils {
 
@@ -34,10 +36,10 @@ class TaskUtils {
           project.logger.info '{}: Checking for groovy activator', project.name
           project.fileTree(srcDir).include('**/Activator.groovy').files.each { File activatorSourceFile ->
             String activator = activatorSourceFile.absolutePath.substring(srcDir.absolutePath.length())
-            if(activator.startsWith('/'))
+            if(activator.startsWith(File.separator))
               activator = activator.substring(1)
             activator = activator.substring(0, activator.length() - 7) // remove '.groovy' file extension
-            activator = activator.replaceAll('/', '.')
+            activator = activator.replaceAll(Matcher.quoteReplacement(File.separator), '.')
             m.attributes['Bundle-Activator'] = activator
             m.attributes['Bundle-ActivationPolicy'] = 'lazy'
             project.logger.info '{}: Found groovy activator: {}', project.name, activator
@@ -47,10 +49,10 @@ class TaskUtils {
             project.logger.info '{}: Checking for java activator', project.name
             project.fileTree(srcDir).include('**/Activator.java').files.each { File activatorSourceFile ->
               String activator = activatorSourceFile.absolutePath.substring(srcDir.absolutePath.length())
-              if(activator.startsWith('/'))
+              if(activator.startsWith(File.separator))
                 activator = activator.substring(1)
               activator = activator.substring(0, activator.length() - 5) // remove '.java' file extension
-              activator = activator.replaceAll('/', '.')
+              activator = activator.replaceAll(Matcher.quoteReplacement(File.separator), '.')
               m.attributes['Bundle-Activator'] = activator
               m.attributes['Bundle-ActivationPolicy'] = 'lazy'
               project.logger.info '{}: Found java activator: {}', project.name, activator
@@ -81,7 +83,7 @@ class TaskUtils {
           def classes = pluginConfig.extension.'**'.findAll({ it.'@class' })*.'@class' + pluginConfig.extension.'**'.findAll({ it.'@contributorClass' })*.'@contributorClass'
           def packages = classes.collect { it.substring(0, it.lastIndexOf('.')) }.unique(false)
           packages.each { String packageName ->
-            String packagePath = packageName.replaceAll(/\./, '/')
+            String packagePath = packageName.replaceAll(/\./,  Matcher.quoteReplacement(File.separator))
             if(project.sourceSets.main.resources.srcDirs.find { new File(it, packagePath).exists() })
               project.logger.info 'Found package {} within {}, no import needed', packageName, project.name
             else {
@@ -98,8 +100,10 @@ class TaskUtils {
           Map privatePackages = [:]
           project.configurations.privateLib.files.each { File lib ->
             project.zipTree(lib).visit { f ->
-              if(f.isDirectory())
-                privatePackages[f.path.replaceAll('/', '.')] = lib.name
+              if(f.isDirectory()){
+                
+                privatePackages[f.path.replaceAll('/', '.').replaceAll(Matcher.quoteReplacement('\\'),'.')] = lib.name
+              }
             }
           }
           Map importPackages = ManifestUtils.parsePackages(m.attributes['Import-Package'])
