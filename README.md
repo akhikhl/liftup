@@ -2,4 +2,4 @@
 
 Gradle plugin for assembling Eclipse RCP/IDE applications.
 
-More information comes soon.
+This project will be superseded soon by wuff.
